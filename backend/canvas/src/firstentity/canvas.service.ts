@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Canvas } from './entities/canvas.entity';
@@ -13,11 +13,16 @@ export class CanvasService {
   ) {}
 
   findAll(): Promise<Canvas[]> {
-    return this.canvasRepository.find();
+    return this.canvasRepository.find({ relations: ['cards'] });
   }
 
-  findOne(id: number): Promise<Canvas> {
-    return this.canvasRepository.findOne({ where: { id } });
+  async findOne(id: number): Promise<Canvas> {
+    // eslint-disable-next-line prettier/prettier
+    const canvas = await this.canvasRepository.findOne({ where: { id }, relations: ['cards'] });
+    if (!canvas) {
+      throw new NotFoundException(`Canvas with ID ${id} not found`);
+    }
+    return canvas;
   }
 
   create(createCanvasDto: CreateCanvasDto): Promise<Canvas> {
@@ -31,6 +36,9 @@ export class CanvasService {
   }
 
   async remove(id: number): Promise<void> {
-    await this.canvasRepository.delete(id);
+    const result = await this.canvasRepository.delete(id);
+    if (result.affected === 0) {
+      throw new NotFoundException(`Canvas with ID ${id} not found`);
+    }
   }
 }
