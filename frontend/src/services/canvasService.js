@@ -1,9 +1,10 @@
+// src/services/canvasService.js
 import axios from 'axios';
 
-const API_URL = 'http://localhost:3000/canvases';
+const apiUrl = process.env.REACT_APP_API_URL;
 
-export const fetchCanvases = () => axios.get(API_URL);
-export const fetchCanvasById = (id) => axios.get(`${API_URL}/${id}`);
-export const createCanvas = (canvas) => axios.post(API_URL, canvas);
-export const updateCanvas = (id, canvas) => axios.put(`${API_URL}/${id}`, canvas);
-export const deleteCanvas = (id) => axios.delete(`${API_URL}/${id}`);
+export const fetchCanvases = () => axios.get(`${apiUrl}/canvases`);
+export const fetchCanvasById = (id) => axios.get(`${apiUrl}/canvases/${id}`);
+export const createCanvas = (canvas) => axios.post(`${apiUrl}/canvases`, canvas);
+export const updateCanvas = (id, canvas) => axios.put(`${apiUrl}/canvases/${id}`, canvas);
+export const deleteCanvas = (id) => axios.delete(`${apiUrl}/canvases/${id}`);

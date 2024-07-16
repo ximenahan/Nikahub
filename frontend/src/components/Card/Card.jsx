@@ -11,6 +11,7 @@ const Card = ({ canvasId }) => {
     width: 100,
     height: 100,
     canvasId,
+    createdAt: new Date().toISOString(),
   });
   const [editingCardId, setEditingCardId] = useState(null);
   const [editingCard, setEditingCard] = useState({
@@ -21,29 +22,50 @@ const Card = ({ canvasId }) => {
     width: 100,
     height: 100,
     canvasId,
+    createdAt: new Date().toISOString(),
   });
 
   const loadCards = useCallback(async () => {
-    const response = await fetchCards();
-    setCards(response.data.filter((card) => card.canvasId === canvasId));
+    try {
+      const response = await fetchCards();
+      setCards(response.data.filter((card) => card.canvasId === canvasId));
+    } catch (error) {
+      console.error('Error loading cards:', error);
+    }
   }, [canvasId]);
 
   useEffect(() => {
     loadCards();
-  }, [loadCards]);
+  }, [canvasId, loadCards]);
 
   const handleCreateCard = async () => {
-    await createCard(newCard);
-    setNewCard({
-      title: '',
-      content: '',
-      positionX: 0,
-      positionY: 0,
-      width: 100,
-      height: 100,
-      canvasId,
-    });
-    loadCards();
+    const validCard = {
+      ...newCard,
+      positionX: Number(newCard.positionX),
+      positionY: Number(newCard.positionY),
+      width: Number(newCard.width),
+      height: Number(newCard.height),
+      canvasId: Number(canvasId),
+      createdAt: new Date().toISOString(),
+    };
+
+    try {
+      console.log('Creating card with data:', validCard);
+      await createCard(validCard);
+      setNewCard({
+        title: '',
+        content: '',
+        positionX: 0,
+        positionY: 0,
+        width: 100,
+        height: 100,
+        canvasId,
+        createdAt: new Date().toISOString(),
+      });
+      loadCards();
+    } catch (error) {
+      console.error('Error creating card:', error.response?.data || error.message);
+    }
   };
 
   const handleEditCard = (card) => {
@@ -52,23 +74,42 @@ const Card = ({ canvasId }) => {
   };
 
   const handleUpdateCard = async () => {
-    await updateCard(editingCardId, editingCard);
-    setEditingCardId(null);
-    setEditingCard({
-      title: '',
-      content: '',
-      positionX: 0,
-      positionY: 0,
-      width: 100,
-      height: 100,
-      canvasId,
-    });
-    loadCards();
+    const validCard = {
+      ...editingCard,
+      positionX: Number(editingCard.positionX),
+      positionY: Number(editingCard.positionY),
+      width: Number(editingCard.width),
+      height: Number(editingCard.height),
+      canvasId: Number(canvasId),
+      createdAt: editingCard.createdAt || new Date().toISOString(),
+    };
+
+    try {
+      await updateCard(editingCardId, validCard);
+      setEditingCardId(null);
+      setEditingCard({
+        title: '',
+        content: '',
+        positionX: 0,
+        positionY: 0,
+        width: 100,
+        height: 100,
+        canvasId,
+        createdAt: new Date().toISOString(),
+      });
+      loadCards();
+    } catch (error) {
+      console.error('Error updating card:', error.response?.data || error.message);
+    }
   };
 
   const handleDeleteCard = async (id) => {
-    await deleteCard(id);
-    loadCards();
+    try {
+      await deleteCard(id);
+      loadCards();
+    } catch (error) {
+      console.error('Error deleting card:', error.response?.data || error.message);
+    }
   };
 
   return (
