@@ -1,20 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { fetchCards, createCard, updateCard, deleteCard } from '../../services/cardService';
+import SingleCard from './SingleCard'; 
 
 const Card = ({ canvasId }) => {
   const [cards, setCards] = useState([]);
   const [newCard, setNewCard] = useState({
-    title: '',
-    content: '',
-    positionX: 0,
-    positionY: 0,
-    width: 100,
-    height: 100,
-    canvasId,
-    createdAt: new Date().toISOString(),
-  });
-  const [editingCardId, setEditingCardId] = useState(null);
-  const [editingCard, setEditingCard] = useState({
     title: '',
     content: '',
     positionX: 0,
@@ -68,35 +58,19 @@ const Card = ({ canvasId }) => {
     }
   };
 
-  const handleEditCard = (card) => {
-    setEditingCardId(card.id);
-    setEditingCard({ ...card });
-  };
-
-  const handleUpdateCard = async () => {
+  const handleUpdateCard = async (id, updatedCard) => {
     const validCard = {
-      ...editingCard,
-      positionX: Number(editingCard.positionX),
-      positionY: Number(editingCard.positionY),
-      width: Number(editingCard.width),
-      height: Number(editingCard.height),
+      ...updatedCard,
+      positionX: Number(updatedCard.positionX),
+      positionY: Number(updatedCard.positionY),
+      width: Number(updatedCard.width),
+      height: Number(updatedCard.height),
       canvasId: Number(canvasId),
-      createdAt: editingCard.createdAt || new Date().toISOString(),
+      createdAt: updatedCard.createdAt || new Date().toISOString(),
     };
 
     try {
-      await updateCard(editingCardId, validCard);
-      setEditingCardId(null);
-      setEditingCard({
-        title: '',
-        content: '',
-        positionX: 0,
-        positionY: 0,
-        width: 100,
-        height: 100,
-        canvasId,
-        createdAt: new Date().toISOString(),
-      });
+      await updateCard(id, validCard);
       loadCards();
     } catch (error) {
       console.error('Error updating card:', error.response?.data || error.message);
@@ -135,39 +109,13 @@ const Card = ({ canvasId }) => {
       <ul>
         {cards.map((card) => (
           <li key={card.id} className="mb-4">
-            {editingCardId === card.id ? (
-              <div>
-                <input
-                  value={editingCard.title}
-                  onChange={(e) => setEditingCard({ ...editingCard, title: e.target.value })}
-                  placeholder="Edit Card Title"
-                  className="border p-2 mb-2"
-                />
-                <input
-                  value={editingCard.content}
-                  onChange={(e) => setEditingCard({ ...editingCard, content: e.target.value })}
-                  placeholder="Edit Card Content"
-                  className="border p-2 mb-2"
-                />
-                <button onClick={handleUpdateCard} className="bg-green-500 text-white p-2 rounded mb-2">
-                  Save
-                </button>
-                <button onClick={() => setEditingCardId(null)} className="bg-gray-500 text-white p-2 rounded mb-2">
-                  Cancel
-                </button>
-              </div>
-            ) : (
-              <div>
-                <h4 className="text-lg font-semibold">{card.title}</h4>
-                <p>{card.content}</p>
-                <button onClick={() => handleEditCard(card)} className="bg-yellow-500 text-white p-2 rounded mb-2">
-                  Edit
-                </button>
-                <button onClick={() => handleDeleteCard(card.id)} className="bg-red-500 text-white p-2 rounded mb-2">
-                  Delete
-                </button>
-              </div>
-            )}
+            <SingleCard
+              card={card}
+              updateCard={handleUpdateCard}
+              deleteCard={handleDeleteCard}
+              startConnection={() => {}}
+              endConnection={() => {}}
+            />
           </li>
         ))}
       </ul>
