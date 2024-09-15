@@ -87,38 +87,35 @@ const Card = ({ canvasId }) => {
   };
 
   return (
-    <div className="p-4">
+    <div className="relative w-full h-full">
       <h3 className="text-xl font-bold mb-4">Cards</h3>
       <div className="mb-4">
         <input
           value={newCard.title}
           onChange={(e) => setNewCard({ ...newCard, title: e.target.value })}
           placeholder="Card Title"
-          className="border p-2 mb-2"
+          className="border p-2 mb-2 mr-2"
         />
         <input
           value={newCard.content}
           onChange={(e) => setNewCard({ ...newCard, content: e.target.value })}
           placeholder="Card Content"
-          className="border p-2 mb-2"
+          className="border p-2 mb-2 mr-2"
         />
         <button onClick={handleCreateCard} className="bg-blue-500 text-white p-2 rounded">
           Add Card
         </button>
       </div>
-      <ul>
-        {cards.map((card) => (
-          <li key={card.id} className="mb-4">
-            <SingleCard
-              card={card}
-              updateCard={handleUpdateCard}
-              deleteCard={handleDeleteCard}
-              startConnection={() => {}}
-              endConnection={() => {}}
-            />
-          </li>
-        ))}
-      </ul>
+      {cards.map((card) => (
+        <SingleCard
+          key={card.id}
+          card={card}
+          updateCard={handleUpdateCard}
+          deleteCard={handleDeleteCard}
+          startConnection={() => {}}
+          endConnection={() => {}}
+        />
+      ))}
     </div>
   );
 };
