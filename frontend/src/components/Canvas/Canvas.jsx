@@ -3,14 +3,14 @@ import { fetchCanvases} from '../../services/canvasService';
 import SingleCard from '../Card/SingleCard';
 import { Move, PanelLeftOpen, PanelLeftClose } from 'lucide-react';
 
+
 const Canvas = () => {
   const [cards, setCards] = useState([]);
-  const [connections, setConnections] = useState([]);
   const [isDragging, setIsDragging] = useState(false);
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
   const [canvasOffset, setCanvasOffset] = useState({ x: 0, y: 0 });
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [connectionStart, setConnectionStart] = useState(null);
+  // const [connectionStart, setConnectionStart] = useState(null);
   const [lastClickTime, setLastClickTime] = useState(0);
   const canvasRef = useRef(null);
 
@@ -65,82 +65,39 @@ const Canvas = () => {
 
   const deleteCard = useCallback((id) => {
     setCards(cards => cards.filter(card => card.id !== id));
-    setConnections(connections => connections.filter(conn => conn.start !== id && conn.end !== id));
   }, []);
-
-  const startConnection = useCallback((cardId) => {
-    setConnectionStart(cardId);
-  }, []);
-
-  const endConnection = useCallback((cardId) => {
-    if (connectionStart && connectionStart !== cardId) {
-      setConnections(prev => [...prev, { start: connectionStart, end: cardId }]);
-      setConnectionStart(null);
-    }
-  }, [connectionStart]);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    connections.forEach(conn => {
-      const startCard = cards.find(card => card.id === conn.start);
-      const endCard = cards.find(card => card.id === conn.end);
-      if (startCard && endCard) {
-        ctx.beginPath();
-        ctx.moveTo(startCard.x + startCard.width / 2, startCard.y + startCard.height / 2);
-        ctx.lineTo(endCard.x + endCard.width / 2, endCard.y + endCard.height / 2);
-        ctx.stroke();
-      }
-    });
-  }, [connections, cards, canvasOffset]);
-
   return (
-    <div className="flex h-screen">
-      <div className={`bg-white shadow-lg transition-all duration-300 ${sidebarOpen ? 'w-64' : 'w-0'}`}>
-        {sidebarOpen && (
-          <div className="p-4">
-            <h2 className="text-xl font-bold mb-4">Sidebar</h2>
-            <p>You can add content here.</p>
-          </div>
-        )}
-      </div>
+    <div className="flex h-screen overflow-hidden bg-gray-100 relative" 
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+      onClick={handleCanvasClick}
+    >
+      <canvas
+        ref={canvasRef}
+        className="absolute top-0 left-0 w-full h-full pointer-events-none"
+        width={window.innerWidth}
+        height={window.innerHeight}
+      />
       <div 
-        className="flex-grow overflow-hidden bg-gray-100 relative" 
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        onClick={handleCanvasClick}
+        className="absolute" 
+        style={{ 
+          transform: `translate(${canvasOffset.x}px, ${canvasOffset.y}px)`,
+          cursor: isDragging ? 'grabbing' : 'default'
+        }}
       >
-        <canvas
-          ref={canvasRef}
-          className="absolute top-0 left-0 w-full h-full pointer-events-none"
-          width={window.innerWidth}
-          height={window.innerHeight}
-        />
-        <div 
-          className="absolute" 
-          style={{ 
-            transform: `translate(${canvasOffset.x}px, ${canvasOffset.y}px)`,
-            cursor: isDragging ? 'grabbing' : 'default'
-          }}
-        >
-          {cards.map(card => (
-            <SingleCard 
-              key={card.id} 
-              card={card}
-              updateCard={updateCard}
-              deleteCard={deleteCard}
-              startConnection={startConnection}
-              endConnection={endConnection}
-            />
-          ))}
-        </div>
-        <div className="absolute bottom-4 right-4 bg-white p-2 rounded-full shadow-md">
-          <Move size={24} />
-        </div>
+        {cards.map(card => (
+          <SingleCard 
+            key={card.id} 
+            card={card}
+            updateCard={updateCard}
+            deleteCard={deleteCard}
+          />
+        ))}
+      </div>
+      <div className="absolute bottom-4 right-4 bg-white p-2 rounded-full shadow-md">
+        <Move size={24} />
       </div>
       <button 
         className="absolute top-4 left-4 bg-white p-2 rounded-full shadow-md"
@@ -150,6 +107,6 @@ const Canvas = () => {
       </button>
     </div>
   );
-};
+}
 
 export default Canvas;
