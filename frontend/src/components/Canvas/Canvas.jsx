@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { fetchCanvases } from '../../services/canvasService';
-import { createCard } from '../../services/cardService';
+import { fetchCards, createCard } from '../../services/cardService';
 import SingleCard from '../Card/SingleCard';
 import { Move, PanelLeftOpen, PanelLeftClose } from 'lucide-react';
 
@@ -12,7 +12,6 @@ const Canvas = () => {
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
   const [canvasOffset, setCanvasOffset] = useState({ x: 0, y: 0 });
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [lastClickTime, setLastClickTime] = useState(0);
   const canvasRef = useRef(null);
 
   useEffect(() => {
@@ -22,6 +21,7 @@ const Canvas = () => {
   async function loadCanvases() {
     try {
       const response = await fetchCanvases();
+      console.log('Canvases loaded:', response.data);
       setCanvases(response.data);
       if (response.data.length > 0) {
         setSelectedCanvas(response.data[0].id);
@@ -31,11 +31,25 @@ const Canvas = () => {
     }
   }
 
-  const handleCanvasClick = useCallback(async (e) => {
-    const currentTime = new Date().getTime();
-    const timeSinceLastClick = currentTime - lastClickTime;
+  useEffect(() => {
+    if (selectedCanvas) {
+      loadCards(selectedCanvas);
+    }
+  }, [selectedCanvas]);
 
-    if (timeSinceLastClick < 300 && selectedCanvas) { // Double-click threshold
+  async function loadCards(canvasId) {
+    try {
+      const response = await fetchCards();
+      console.log('Cards loaded:', response.data);
+      const filteredCards = response.data.filter(card => card.canvasId === canvasId);
+      setCards(filteredCards);
+    } catch (error) {
+      console.error('Error loading cards:', error);
+    }
+  }
+
+  const handleCanvasDoubleClick = useCallback(async (e) => {
+    if (selectedCanvas) {
       const rect = e.currentTarget.getBoundingClientRect();
       const x = e.clientX - rect.left - canvasOffset.x;
       const y = e.clientY - rect.top - canvasOffset.y;
@@ -50,14 +64,16 @@ const Canvas = () => {
       };
       try {
         const response = await createCard(newCard);
-        setCards([...cards, response.data]);
+        console.log('New card created:', response.data);
+        setCards((prevCards) => [...prevCards, response.data]);
+        // Alternatively, reload all cards
+        // await loadCards(selectedCanvas);
       } catch (error) {
         console.error('Error creating card:', error);
       }
     }
+  }, [canvasOffset, selectedCanvas]);
 
-    setLastClickTime(currentTime);
-  }, [cards, canvasOffset, lastClickTime, selectedCanvas]);
 
   const handleMouseDown = useCallback((e) => {
     if (e.button === 1) { // Middle mouse button
@@ -88,6 +104,7 @@ const Canvas = () => {
   const deleteCard = useCallback((id) => {
     setCards(cards => cards.filter(card => card.id !== id));
   }, []);
+
   return (
     <div className="flex h-screen overflow-hidden bg-gray-100 relative">
       {sidebarOpen && (
@@ -112,7 +129,7 @@ const Canvas = () => {
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
-        onClick={handleCanvasClick}
+        onDoubleClick={handleCanvasDoubleClick}
       >
         <canvas
           ref={canvasRef}
