@@ -72,7 +72,7 @@ const SingleCard = ({ card, updateCard, deleteCard, startConnection, endConnecti
     debouncedUpdateCardRef.current(localCard.id, localCard);
   };
 
-  const handleClick = (e) => {
+  const handleDoubleClick = (e) => {
     e.stopPropagation();
     setIsEditing(true);
     setTimeout(() => textareaRef.current?.focus(), 0);
@@ -87,41 +87,24 @@ const SingleCard = ({ card, updateCard, deleteCard, startConnection, endConnecti
     updateCard(localCard.id, { content: textareaRef.current.value });
   };
 
-//  comment out the Connect button
-
   return (
-    <div 
+    <div
       className="absolute bg-white shadow-lg rounded-lg overflow-hidden"
-      style={{ 
-        left: localCard.positionX, 
-        top: localCard.positionY, 
-        width: localCard.width, 
+      style={{
+        left: localCard.positionX,
+        top: localCard.positionY,
+        width: localCard.width,
         height: localCard.height,
-        cursor: isDragging ? 'grabbing' : 'grab'
       }}
-      onMouseDown={(e) => handleMouseDown(e, 'drag')}
-      onClick={handleClick}
     >
-      <div className="absolute top-2 right-2 flex space-x-2 opacity-0 hover:opacity-100 transition-opacity">
-        {/*<button 
-          className="text-blue-500 hover:text-blue-700 text-sm"
-          onMouseDown={(e) => {
-            e.stopPropagation();
-            startConnection(localCard.id);
-          }}
-        >
-          Connect
-        </button>*/}
-        <button 
-          className="text-red-500 hover:text-red-700 text-sm"
-          onClick={(e) => {
-            e.stopPropagation();
-            deleteCard(localCard.id);
-          }}
-        >
-          Delete
-        </button>
+      {/* Header area for dragging */}
+      <div
+        className="cursor-move p-2 bg-gray-200"
+        onMouseDown={(e) => handleMouseDown(e, 'drag')}
+      >
+        <span>Drag Me</span>
       </div>
+      {/* Content area */}
       {isEditing ? (
         <textarea
           ref={textareaRef}
@@ -130,14 +113,43 @@ const SingleCard = ({ card, updateCard, deleteCard, startConnection, endConnecti
           onBlur={handleBlur}
         />
       ) : (
-        <div className="p-4 w-full h-full overflow-auto">
+        <div
+          className="p-4 w-full h-full overflow-auto"
+          onDoubleClick={handleDoubleClick}
+        >
           <ReactMarkdown>{localCard.content}</ReactMarkdown>
         </div>
       )}
-      <div 
+      {/* Resize handle */}
+      <div
         className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize"
         onMouseDown={(e) => handleMouseDown(e, 'resize')}
+        style={{ backgroundColor: 'gray' }} // Ensure it's visible and can capture events
       />
+      {/* Control buttons */}
+      <div className="absolute top-2 right-2 flex space-x-2 opacity-0 hover:opacity-100 transition-opacity">
+        <button
+          className="text-red-500 hover:text-red-700 text-sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            deleteCard(localCard.id);
+          }}
+        >
+          Delete
+        </button>
+        {/* Comment out the Connect button */}
+        {/* 
+        <button 
+          className="text-blue-500 hover:text-blue-700 text-sm"
+          onMouseDown={(e) => {
+            e.stopPropagation();
+            startConnection(localCard.id);
+          }}
+        >
+          Connect
+        </button> 
+        */}
+      </div>
     </div>
   );
 };
