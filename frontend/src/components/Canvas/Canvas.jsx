@@ -3,6 +3,8 @@ import { fetchCanvases } from '../../services/canvasService';
 import { fetchCards, createCard } from '../../services/cardService';
 import SingleCard from '../Card/SingleCard';
 import { Move, PanelLeftOpen, PanelLeftClose } from 'lucide-react';
+import { updateCard as updateCardAPI } from '../../services/cardService';
+import { deleteCard as deleteCardAPI } from '../../services/cardService';
 
 const Canvas = () => {
   const [cards, setCards] = useState([]);
@@ -95,14 +97,40 @@ const Canvas = () => {
     setIsDragging(false);
   }, []);
 
-  const updateCard = useCallback((id, updates) => {
-    setCards(cards => cards.map(card => 
-      card.id === id ? { ...card, ...updates } : card
-    ));
-  }, []);
+  const updateCard = useCallback(async (id, updates) => {
+    try {
+      // Find the existing card data
+      const existingCard = cards.find(card => card.id === id);
+      if (!existingCard) return;
+  
+      // Prepare the updated card data
+      const updatedCard = {
+        ...existingCard,
+        ...updates,
+      };
+  
+      // Update in backend
+      await updateCardAPI(id, updatedCard);
+  
+      // Update local state
+      setCards(cards => cards.map(card => 
+        card.id === id ? updatedCard : card
+      ));
+    } catch (error) {
+      console.error('Error updating card:', error);
+    }
+  }, [cards]);
 
-  const deleteCard = useCallback((id) => {
-    setCards(cards => cards.filter(card => card.id !== id));
+  const deleteCard = useCallback(async (id) => {
+    try {
+      // Delete from backend
+      await deleteCardAPI(id);
+  
+      // Update local state
+      setCards(cards => cards.filter(card => card.id !== id));
+    } catch (error) {
+      console.error('Error deleting card:', error);
+    }
   }, []);
 
   return (
