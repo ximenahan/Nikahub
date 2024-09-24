@@ -1,5 +1,6 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
+import debounce from 'lodash.debounce';
 
 const SingleCard = ({ card, updateCard, deleteCard, startConnection, endConnection }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -8,34 +9,67 @@ const SingleCard = ({ card, updateCard, deleteCard, startConnection, endConnecti
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
   const textareaRef = useRef(null);
 
+  const [localCard, setLocalCard] = useState(card);
+
+  useEffect(() => {
+    setLocalCard(card);
+  }, [card]);
+
+  // Ref to store the debounced function
+  const debouncedUpdateCardRef = useRef();
+
+  useEffect(() => {
+    debouncedUpdateCardRef.current = debounce((id, updatedCard) => {
+      updateCard(id, updatedCard);
+    }, 500);
+  }, [updateCard]);
+
   const handleMouseDown = (e, action) => {
     e.stopPropagation();
+    e.preventDefault();
     if (action === 'drag') setIsDragging(true);
     if (action === 'resize') setIsResizing(true);
     setStartPos({ x: e.clientX, y: e.clientY });
+
+    // Attach event listeners
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
   };
 
-  const handleMouseMove = useCallback((e) => {
+  const handleMouseMove = (e) => {
+    e.preventDefault();
     if (isDragging) {
       const dx = e.clientX - startPos.x;
       const dy = e.clientY - startPos.y;
-      updateCard(card.id, { positionX: card.positionX + dx, positionY: card.positionY + dy });
+      setLocalCard((prev) => ({
+        ...prev,
+        positionX: prev.positionX + dx,
+        positionY: prev.positionY + dy,
+      }));
       setStartPos({ x: e.clientX, y: e.clientY });
     }
     if (isResizing) {
       const dx = e.clientX - startPos.x;
       const dy = e.clientY - startPos.y;
-      updateCard(card.id, { 
-        width: Math.max(100, card.width + dx),
-        height: Math.max(100, card.height + dy)
-      });
+      setLocalCard((prev) => ({
+        ...prev,
+        width: Math.max(100, prev.width + dx),
+        height: Math.max(100, prev.height + dy),
+      }));
       setStartPos({ x: e.clientX, y: e.clientY });
     }
-  }, [isDragging, isResizing, startPos, card, updateCard]);
+  };
 
   const handleMouseUp = () => {
     setIsDragging(false);
     setIsResizing(false);
+
+    // Remove event listeners
+    window.removeEventListener('mousemove', handleMouseMove);
+    window.removeEventListener('mouseup', handleMouseUp);
+
+    // Save the updated card to backend using the debounced function
+    debouncedUpdateCardRef.current(localCard.id, localCard);
   };
 
   const handleClick = (e) => {
@@ -46,23 +80,24 @@ const SingleCard = ({ card, updateCard, deleteCard, startConnection, endConnecti
 
   const handleBlur = () => {
     setIsEditing(false);
-    updateCard(card.id, { content: textareaRef.current.value });
+    setLocalCard((prev) => ({
+      ...prev,
+      content: textareaRef.current.value,
+    }));
+    updateCard(localCard.id, { content: textareaRef.current.value });
   };
 
   return (
     <div 
       className="absolute bg-white shadow-lg rounded-lg overflow-hidden"
       style={{ 
-        left: card.positionX, 
-        top: card.positionY, 
-        width: card.width, 
-        height: card.height,
+        left: localCard.positionX, 
+        top: localCard.positionY, 
+        width: localCard.width, 
+        height: localCard.height,
         cursor: isDragging ? 'grabbing' : 'grab'
       }}
       onMouseDown={(e) => handleMouseDown(e, 'drag')}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
       onClick={handleClick}
     >
       <div className="absolute top-2 right-2 flex space-x-2 opacity-0 hover:opacity-100 transition-opacity">
@@ -70,7 +105,7 @@ const SingleCard = ({ card, updateCard, deleteCard, startConnection, endConnecti
           className="text-blue-500 hover:text-blue-700 text-sm"
           onMouseDown={(e) => {
             e.stopPropagation();
-            startConnection(card.id);
+            startConnection(localCard.id);
           }}
         >
           Connect
@@ -79,7 +114,7 @@ const SingleCard = ({ card, updateCard, deleteCard, startConnection, endConnecti
           className="text-red-500 hover:text-red-700 text-sm"
           onClick={(e) => {
             e.stopPropagation();
-            deleteCard(card.id);
+            deleteCard(localCard.id);
           }}
         >
           Delete
@@ -89,12 +124,12 @@ const SingleCard = ({ card, updateCard, deleteCard, startConnection, endConnecti
         <textarea
           ref={textareaRef}
           className="w-full h-full p-4 resize-none outline-none"
-          defaultValue={card.content}
+          defaultValue={localCard.content}
           onBlur={handleBlur}
         />
       ) : (
         <div className="p-4 w-full h-full overflow-auto">
-          <ReactMarkdown>{card.content}</ReactMarkdown>
+          <ReactMarkdown>{localCard.content}</ReactMarkdown>
         </div>
       )}
       <div 
