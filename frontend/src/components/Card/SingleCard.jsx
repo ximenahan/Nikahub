@@ -87,6 +87,8 @@ const SingleCard = ({ card, updateCard, deleteCard, startConnection, endConnecti
     updateCard(localCard.id, { content: textareaRef.current.value });
   };
 
+//  comment out the Connect button
+
   return (
     <div 
       className="absolute bg-white shadow-lg rounded-lg overflow-hidden"
@@ -101,7 +103,7 @@ const SingleCard = ({ card, updateCard, deleteCard, startConnection, endConnecti
       onClick={handleClick}
     >
       <div className="absolute top-2 right-2 flex space-x-2 opacity-0 hover:opacity-100 transition-opacity">
-        <button 
+        {/*<button 
           className="text-blue-500 hover:text-blue-700 text-sm"
           onMouseDown={(e) => {
             e.stopPropagation();
@@ -109,7 +111,7 @@ const SingleCard = ({ card, updateCard, deleteCard, startConnection, endConnecti
           }}
         >
           Connect
-        </button>
+        </button>*/}
         <button 
           className="text-red-500 hover:text-red-700 text-sm"
           onClick={(e) => {
