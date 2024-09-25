@@ -166,7 +166,7 @@ const Canvas = () => {
           height={window.innerHeight}
         />
         <div 
-          className="absolute" 
+          className="relative" 
           style={{ 
             transform: `translate(${canvasOffset.x}px, ${canvasOffset.y}px)`,
             cursor: isDragging ? 'grabbing' : 'default'

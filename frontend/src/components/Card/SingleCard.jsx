@@ -91,10 +91,10 @@ const SingleCard = ({ card, updateCard, deleteCard, startConnection, endConnecti
     <div
       className="absolute bg-white shadow-lg rounded-lg overflow-hidden"
       style={{
-        left: localCard.positionX,
-        top: localCard.positionY,
-        width: localCard.width,
-        height: localCard.height,
+        left: `${localCard.positionX}px`,
+        top: `${localCard.positionY}px`,
+        width: `${localCard.width}px`,
+        height: `${localCard.height}px`,
       }}
     >
       {/* Header area for dragging */}
