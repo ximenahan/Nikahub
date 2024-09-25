@@ -144,7 +144,9 @@ const Canvas = () => {
   }, []);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-100 relative">
+    <div data-testid="canvas-component" // Add this line
+    className="flex h-screen overflow-hidden bg-gray-100 relative"
+    >
       {sidebarOpen && (
         <div className="w-64 bg-white shadow-md p-4">
           <h2 className="text-xl font-bold mb-4">Canvases</h2>
@@ -162,6 +164,7 @@ const Canvas = () => {
         </div>
       )}
       <div 
+        data-testid="canvas-area" 
         className="flex-grow relative"
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}

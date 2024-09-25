@@ -114,6 +114,7 @@ const SingleCard = ({ card, updateCard, deleteCard, startConnection, endConnecti
 
   return (
     <div
+      data-testid="single-card"  
       className="absolute bg-white shadow-lg rounded-lg overflow-hidden"
       style={{
         left: `${localCard.positionX}px`,
@@ -124,6 +125,7 @@ const SingleCard = ({ card, updateCard, deleteCard, startConnection, endConnecti
     >
       {/* Header area for dragging */}
       <div
+        data-testid="card-header"
         className="cursor-move p-2 bg-gray-200"
         onMouseDown={(e) => handleMouseDown(e, 'drag')}
       >
@@ -132,13 +134,15 @@ const SingleCard = ({ card, updateCard, deleteCard, startConnection, endConnecti
       {/* Content area */}
       {isEditing ? (
         <textarea
-          ref={textareaRef}
+         data-testid="card-textarea"  
+         ref={textareaRef}
           className="w-full h-full p-4 resize-none outline-none"
           defaultValue={localCard.content}
           onBlur={handleBlur}
         />
       ) : (
         <div
+          data-testid="card-content"
           className="p-4 w-full h-full overflow-auto"
           onDoubleClick={handleDoubleClick}
         >
@@ -147,13 +151,17 @@ const SingleCard = ({ card, updateCard, deleteCard, startConnection, endConnecti
       )}
       {/* Resize handle */}
       <div
+        data-testid="card-resize-handle"
         className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize"
         onMouseDown={(e) => handleMouseDown(e, 'resize')}
         style={{ backgroundColor: 'gray' }} // Ensure it's visible and can capture events
       />
       {/* Control buttons */}
-      <div className="absolute top-2 right-2 flex space-x-2 opacity-0 hover:opacity-100 transition-opacity">
+      <div 
+        data-testid="card-controls"
+        className="absolute top-2 right-2 flex space-x-2 opacity-0 hover:opacity-100 transition-opacity">
         <button
+          data-testid="delete-button"
           className="text-red-500 hover:text-red-700 text-sm"
           onClick={(e) => {
             e.stopPropagation();

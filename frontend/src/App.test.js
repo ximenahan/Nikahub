@@ -1,8 +1,16 @@
+// App.test.js
+
+import React from 'react';
 import { render, screen } from '@testing-library/react';
 import App from './App';
 
-test('renders learn react link', () => {
+test('renders App component without crashing', () => {
   render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+});
+
+test('renders Canvas component within App', () => {
+  render(<App />);
+  // Assuming Canvas component has a test ID for identification
+  const canvasElement = screen.getByTestId('canvas-component');
+  expect(canvasElement).toBeInTheDocument();
 });
