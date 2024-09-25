@@ -7,7 +7,10 @@ const SingleCard = ({ card, updateCard, deleteCard, startConnection, endConnecti
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
+  
   const textareaRef = useRef(null);
+  const startPosRef = useRef(startPos);
+  const localCardRef = useRef(card);
 
   const [localCard, setLocalCard] = useState(card);
 
@@ -15,6 +18,15 @@ const SingleCard = ({ card, updateCard, deleteCard, startConnection, endConnecti
     setLocalCard(card);
   }, [card]);
 
+  // Update refs whenever state changes
+  useEffect(() => {
+    startPosRef.current = startPos;
+  }, [startPos]);
+
+  useEffect(() => {
+    localCardRef.current = localCard;
+  }, [localCard]);
+  
   // Ref to store the debounced function
   const debouncedUpdateCardRef = useRef();
 
@@ -27,50 +39,62 @@ const SingleCard = ({ card, updateCard, deleteCard, startConnection, endConnecti
   const handleMouseDown = (e, action) => {
     e.stopPropagation();
     e.preventDefault();
-    if (action === 'drag') setIsDragging(true);
-    if (action === 'resize') setIsResizing(true);
+    if (action === 'drag') {
+      setIsDragging(true);
+    }
+    if (action === 'resize') {
+      setIsResizing(true);
+    }
     setStartPos({ x: e.clientX, y: e.clientY });
-
-    // Attach event listeners
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
   };
 
-  const handleMouseMove = (e) => {
-    e.preventDefault();
-    if (isDragging) {
-      const dx = e.clientX - startPos.x;
-      const dy = e.clientY - startPos.y;
-      setLocalCard((prev) => ({
-        ...prev,
-        positionX: prev.positionX + dx,
-        positionY: prev.positionY + dy,
-      }));
-      setStartPos({ x: e.clientX, y: e.clientY });
+  useEffect(() => {
+    if (isDragging || isResizing) {
+      const handleMouseMove = (e) => {
+        e.preventDefault();
+        const dx = e.clientX - startPosRef.current.x;
+        const dy = e.clientY - startPosRef.current.y;
+
+        if (isDragging) {
+          setLocalCard((prev) => ({
+            ...prev,
+            positionX: prev.positionX + dx,
+            positionY: prev.positionY + dy,
+          }));
+        }
+
+        if (isResizing) {
+          setLocalCard((prev) => ({
+            ...prev,
+            width: Math.max(100, prev.width + dx),
+            height: Math.max(100, prev.height + dy),
+          }));
+        }
+
+        setStartPos({ x: e.clientX, y: e.clientY });
+      };
+
+      const handleMouseUp = () => {
+        setIsDragging(false);
+        setIsResizing(false);
+
+        window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('mouseup', handleMouseUp);
+
+        // Update backend
+        debouncedUpdateCardRef.current(localCardRef.current.id, localCardRef.current);
+      };
+
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+
+      // Clean up the event listeners on unmount or when dragging/resizing stops
+      return () => {
+        window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('mouseup', handleMouseUp);
+      };
     }
-    if (isResizing) {
-      const dx = e.clientX - startPos.x;
-      const dy = e.clientY - startPos.y;
-      setLocalCard((prev) => ({
-        ...prev,
-        width: Math.max(100, prev.width + dx),
-        height: Math.max(100, prev.height + dy),
-      }));
-      setStartPos({ x: e.clientX, y: e.clientY });
-    }
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-    setIsResizing(false);
-
-    // Remove event listeners
-    window.removeEventListener('mousemove', handleMouseMove);
-    window.removeEventListener('mouseup', handleMouseUp);
-
-    // Save the updated card to backend using the debounced function
-    debouncedUpdateCardRef.current(localCard.id, localCard);
-  };
+  }, [isDragging, isResizing]); // Only depends on isDragging and isResizing
 
   const handleDoubleClick = (e) => {
     e.stopPropagation();
@@ -80,11 +104,12 @@ const SingleCard = ({ card, updateCard, deleteCard, startConnection, endConnecti
 
   const handleBlur = () => {
     setIsEditing(false);
+    const updatedContent = textareaRef.current.value;
     setLocalCard((prev) => ({
       ...prev,
-      content: textareaRef.current.value,
+      content: updatedContent,
     }));
-    updateCard(localCard.id, { content: textareaRef.current.value });
+    updateCard(localCard.id, { content: updatedContent });
   };
 
   return (
