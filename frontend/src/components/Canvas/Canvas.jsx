@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { fetchCanvases } from '../../services/canvasService';
 import { fetchCards, createCard } from '../../services/cardService';
 import SingleCard from '../Card/SingleCard';
 import { Move, PanelLeftOpen, PanelLeftClose } from 'lucide-react';
@@ -22,6 +21,7 @@ const Canvas = () => {
 
   async function loadCanvases() {
     try {
+      const { fetchCanvases } = await import('../../services/canvasService');
       const response = await fetchCanvases();
       console.log('Canvases loaded:', response.data);
       setCanvases(response.data);
@@ -51,10 +51,15 @@ const Canvas = () => {
   }
 
   const handleCanvasDoubleClick = useCallback(async (e) => {
+    console.log('Canvas double-clicked');
+
     if (selectedCanvas) {
       const rect = e.currentTarget.getBoundingClientRect();
-      const x = e.clientX - rect.left - canvasOffset.x;
-      const y = e.clientY - rect.top - canvasOffset.y;
+      console.log('canvasOffset:', canvasOffset);
+      const x = e.clientX - rect.left + canvasOffset.x;
+      const y = e.clientY - rect.top + canvasOffset.y;
+      console.log('x:', x, 'y:', y);
+      
       const newCard = {
         title: 'New Card',
         content: '# New Card\n\nClick to edit',
@@ -63,7 +68,11 @@ const Canvas = () => {
         width: 200,
         height: 150,
         canvasId: selectedCanvas,
+        createdAt: new Date(),
       };
+
+      console.log('Creating new card:', newCard);
+
       try {
         const response = await createCard(newCard);
         console.log('New card created:', response.data);
@@ -72,6 +81,7 @@ const Canvas = () => {
         // await loadCards(selectedCanvas);
       } catch (error) {
         console.error('Error creating card:', error);
+        console.error('Server response:', error.response?.data);
       }
     }
   }, [canvasOffset, selectedCanvas]);
