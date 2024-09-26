@@ -23,14 +23,16 @@ describe('CanvasModule Integration Tests', () => {
   });
 
   afterAll(async () => {
-    await app.close();
+    if (app) {
+      await app.close();
+    }
   });
 
   describe('POST /canvases', () => {
     it('should create a new canvas', async () => {
       const newCanvas = {
         name: 'Integration Test Canvas',
-        // Add other necessary properties
+        // Add other necessary properties if any
       };
 
       const response = await request(app.getHttpServer())
@@ -41,7 +43,7 @@ describe('CanvasModule Integration Tests', () => {
       expect(response.body).toMatchObject({
         id: expect.any(Number),
         name: newCanvas.name,
-        // Verify other properties
+        // Verify other properties if any
       });
 
       // Verify the canvas exists in the database
@@ -54,7 +56,7 @@ describe('CanvasModule Integration Tests', () => {
 
     it('should fail to create a canvas with invalid data', async () => {
       const invalidCanvas = {
-        // Missing required fields
+        // Missing required fields like 'name'
       };
 
       const response = await request(app.getHttpServer())
@@ -63,13 +65,13 @@ describe('CanvasModule Integration Tests', () => {
         .expect(400);
 
       expect(response.body.message).toContain('name should not be empty');
-      // Add more assertions based on your validation rules
+      // Add more assertions based on your validation rules if any
     });
   });
 
   describe('GET /canvases', () => {
     it('should retrieve all canvases', async () => {
-      // Ensure there is at least one canvas (from seed)
+      // Ensure there is at least one canvas (from previous test)
       const response = await request(app.getHttpServer())
         .get('/canvases')
         .expect(200);
@@ -91,7 +93,7 @@ describe('CanvasModule Integration Tests', () => {
       expect(response.body).toMatchObject({
         id: canvas.id,
         name: canvas.name,
-        // Verify other properties
+        // Verify other properties if any
       });
     });
 
@@ -111,7 +113,7 @@ describe('CanvasModule Integration Tests', () => {
 
       const updateData = {
         name: 'Updated Integration Test Canvas',
-        // Add other fields to update
+        // Add other fields to update if any
       };
 
       const response = await request(app.getHttpServer())
@@ -122,7 +124,7 @@ describe('CanvasModule Integration Tests', () => {
       expect(response.body).toMatchObject({
         id: canvas.id,
         name: updateData.name,
-        // Verify other updated properties
+        // Verify other updated properties if any
       });
 
       // Verify the update in the database
@@ -130,7 +132,7 @@ describe('CanvasModule Integration Tests', () => {
         where: { id: canvas.id },
       });
       expect(updatedCanvas.name).toBe(updateData.name);
-      // Verify other updated properties
+      // Verify other updated properties if any
     });
 
     it('should return 404 when updating a non-existent canvas', async () => {
@@ -147,28 +149,54 @@ describe('CanvasModule Integration Tests', () => {
   });
 
   describe('DELETE /canvases/:id', () => {
-    it('should delete an existing canvas', async () => {
-      const canvas = await canvasRepository.findOne({ where: {} });
-      expect(canvas).toBeDefined();
-      // Optionally, ensure no cards are associated before deletion
-      const associatedCards = await cardRepository.find({
-        where: {
-          canvasId: canvas.id,
-        },
+    it('should prevent deleting a canvas with associated cards', async () => {
+      // Step 1: Create a new canvas
+      const canvas = await canvasRepository.save({
+        name: 'Canvas with Cards',
+        // Add other necessary properties if any
       });
-      if (associatedCards.length > 0) {
-        throw new Error('Cannot delete canvas with associated cards');
-      }
-      // Depending on your cascade settings, deleting a canvas might delete associated cards or fail
-      // Adjust expectations accordingly
 
-      await request(app.getHttpServer())
+      // Step 2: Create a card associated with the canvas
+      const card = await cardRepository.save({
+        title: 'Associated Card',
+        content: 'This card is associated with the canvas.',
+        canvasId: canvas.id,
+        positionX: 100,
+        positionY: 100,
+        width: 200,
+        height: 150,
+        createdAt: new Date(),
+      });
+
+      // Step 3: Attempt to delete the canvas
+      const response = await request(app.getHttpServer())
         .delete(`/canvases/${canvas.id}`)
+        .expect(400); // Expecting Bad Request
+
+      expect(response.body.message).toContain(
+        'Cannot delete canvas with associated cards',
+      );
+
+      // Cleanup: Delete the associated card and canvas
+      await cardRepository.delete(card.id);
+      await canvasRepository.delete(canvas.id);
+    });
+
+    it('should delete an existing canvas without associated cards', async () => {
+      // Step 1: Create a new canvas without associated cards
+      const newCanvas = await canvasRepository.save({
+        name: 'Canvas Without Cards',
+        // Add other necessary properties if any
+      });
+
+      // Step 2: Attempt to delete the canvas
+      await request(app.getHttpServer())
+        .delete(`/canvases/${newCanvas.id}`)
         .expect(200);
 
-      // Verify the canvas is deleted
+      // Step 3: Verify the canvas is deleted
       const deletedCanvas = await canvasRepository.findOne({
-        where: { id: canvas.id },
+        where: { id: newCanvas.id },
       });
       expect(deletedCanvas).toBeUndefined();
     });

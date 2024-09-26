@@ -1,15 +1,24 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+// src/firstentity/canvas.service.ts
+
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Canvas } from './entities/canvas.entity';
 import { CreateCanvasDto } from './dto/create-canvas.dto';
 import { UpdateCanvasDto } from './dto/update-canvas.dto';
+import { Card } from './entities/card.entity';
 
 @Injectable()
 export class CanvasService {
   constructor(
     @InjectRepository(Canvas)
     private canvasRepository: Repository<Canvas>,
+    @InjectRepository(Card)
+    private cardRepository: Repository<Card>, // Inject Card repository
   ) {}
 
   findAll(): Promise<Canvas[]> {
@@ -17,8 +26,10 @@ export class CanvasService {
   }
 
   async findOne(id: number): Promise<Canvas> {
-    // eslint-disable-next-line prettier/prettier
-    const canvas = await this.canvasRepository.findOne({ where: { id }, relations: ['cards'] });
+    const canvas = await this.canvasRepository.findOne({
+      where: { id },
+      relations: ['cards'],
+    });
     if (!canvas) {
       throw new NotFoundException(`Canvas with ID ${id} not found`);
     }
@@ -36,9 +47,20 @@ export class CanvasService {
   }
 
   async remove(id: number): Promise<void> {
-    const result = await this.canvasRepository.delete(id);
-    if (result.affected === 0) {
+    const canvas = await this.canvasRepository.findOne({
+      where: { id },
+      relations: ['cards'],
+    });
+    if (!canvas) {
       throw new NotFoundException(`Canvas with ID ${id} not found`);
     }
+
+    if (canvas.cards && canvas.cards.length > 0) {
+      throw new BadRequestException(
+        'Cannot delete canvas with associated cards',
+      );
+    }
+
+    await this.canvasRepository.delete(id);
   }
 }

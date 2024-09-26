@@ -3,14 +3,20 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { AppModule } from '../src/app.module';
-import { TypeOrmModule, getRepositoryToken } from '@nestjs/typeorm';
+import {
+  TypeOrmModule,
+  getRepositoryToken,
+  getDataSourceToken,
+} from '@nestjs/typeorm';
 import { Card } from '../src/firstentity/entities/card.entity';
 import { Canvas } from '../src/firstentity/entities/canvas.entity';
-import { Repository } from 'typeorm';
+import { Repository, DataSource, QueryRunner } from 'typeorm';
 
 let app: INestApplication;
 let cardRepository: Repository<Card>;
 let canvasRepository: Repository<Canvas>;
+let dataSource: DataSource;
+let queryRunner: QueryRunner;
 
 export const initializeTestApp = async (): Promise<INestApplication> => {
   const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -42,36 +48,39 @@ export const initializeTestApp = async (): Promise<INestApplication> => {
     getRepositoryToken(Canvas),
   );
 
-  // Seed initial data if necessary
-  await seedInitialData();
+  // Retrieve the DataSource to create QueryRunner
+  dataSource = moduleFixture.get<DataSource>(getDataSourceToken());
+
+  // Create a QueryRunner for transactions
+  queryRunner = dataSource.createQueryRunner();
+  await queryRunner.connect();
 
   return app;
-};
-
-const seedInitialData = async () => {
-  // Example: Seed a Canvas entity
-  const canvas = canvasRepository.create({
-    id: 1,
-    name: 'Default Canvas',
-    // Add other necessary properties if any
-  });
-  await canvasRepository.save(canvas);
-
-  // Example: Seed a Card entity if needed
-  const card = cardRepository.create({
-    id: 1,
-    title: 'Initial Card',
-    content: 'This is an initial card for integration testing.',
-    canvasId: canvas.id,
-    positionX: 50,
-    positionY: 50,
-    width: 200,
-    height: 150,
-    createdAt: new Date(),
-  });
-  await cardRepository.save(card);
 };
 
 export const getApp = (): INestApplication => app;
 export const getCardRepository = (): Repository<Card> => cardRepository;
 export const getCanvasRepository = (): Repository<Canvas> => canvasRepository;
+
+// Functions to manage transactions
+export const startTransaction = async (): Promise<void> => {
+  if (!queryRunner.isReleased && !queryRunner.isTransactionActive) {
+    await queryRunner.startTransaction();
+  }
+};
+
+export const rollbackTransaction = async (): Promise<void> => {
+  if (queryRunner.isTransactionActive) {
+    await queryRunner.rollbackTransaction();
+  }
+};
+
+// Function to clean up the app and release the QueryRunner
+export const cleanupTestApp = async () => {
+  if (queryRunner && !queryRunner.isReleased) {
+    await queryRunner.release();
+  }
+  if (app) {
+    await app.close();
+  }
+};
