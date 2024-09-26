@@ -5,7 +5,6 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import Canvas from '../../components/Canvas/Canvas';
 import { fetchCanvases } from '../../services/canvasService';
 import { fetchCards, createCard, deleteCard } from '../../services/cardService';
-import '@testing-library/jest-dom/extend-expect';
 
 // Mock the services
 jest.mock('../../services/canvasService');

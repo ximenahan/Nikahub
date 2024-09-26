@@ -3,7 +3,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import SingleCard from '../../components/Card/SingleCard';
-import '@testing-library/jest-dom/extend-expect';
 
 describe('SingleCard Component Integration Tests', () => {
   const mockCard = {
