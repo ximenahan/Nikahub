@@ -198,7 +198,7 @@ describe('CanvasModule Integration Tests', () => {
       const deletedCanvas = await canvasRepository.findOne({
         where: { id: newCanvas.id },
       });
-      expect(deletedCanvas).toBeUndefined();
+      expect(deletedCanvas).toBeNull();
     });
 
     it('should return 404 when deleting a non-existent canvas', async () => {
