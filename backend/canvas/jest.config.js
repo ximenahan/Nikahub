@@ -2,13 +2,14 @@
 
 module.exports = {
   moduleFileExtensions: ['js', 'json', 'ts'],
-  rootDir: '.',
+  rootDir: 'src',
   testRegex: '.*\\.spec\\.ts$',
   transform: {
-    '^.+\\.ts$': 'ts-jest',
+    '^.+\\.(t|j)s$': 'ts-jest',
   },
-  coverageDirectory: './coverage/unit',
+  collectCoverageFrom: ['**/*.(t|j)s'],
+  coverageDirectory: '../coverage/unit',
   testEnvironment: 'node',
-  // Exclude integration tests from unit test runs
-  testPathIgnorePatterns: ['/test/integration/'],
+  // Exclude integration and E2E tests from unit tests
+  testPathIgnorePatterns: ['/test/integration/', '/test/e2e/'],
 };

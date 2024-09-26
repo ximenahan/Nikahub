@@ -1,13 +1,14 @@
 // jest.integration.config.js
 
 module.exports = {
+  preset: 'ts-jest',
   moduleFileExtensions: ['js', 'json', 'ts'],
-  rootDir: '.',
+  rootDir: 'test/integration',
   testRegex: '.*\\.integration\\.spec\\.ts$',
   transform: {
     '^.+\\.ts$': 'ts-jest',
   },
-  collectCoverage: true,
-  coverageDirectory: './coverage/integration',
+  collectCoverageFrom: ['**/*.(t|j)s'],
+  coverageDirectory: '../../coverage/integration',
   testEnvironment: 'node',
 };

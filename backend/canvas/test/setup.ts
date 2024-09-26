@@ -3,7 +3,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { AppModule } from '../src/app.module';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { TypeOrmModule, getRepositoryToken } from '@nestjs/typeorm';
 import { Card } from '../src/firstentity/entities/card.entity';
 import { Canvas } from '../src/firstentity/entities/canvas.entity';
 import { Repository } from 'typeorm';
@@ -34,9 +34,13 @@ export const initializeTestApp = async (): Promise<INestApplication> => {
 
   await app.init();
 
-  // Get repositories for seeding data
-  cardRepository = moduleFixture.get<Repository<Card>>(Card);
-  canvasRepository = moduleFixture.get<Repository<Canvas>>(Canvas);
+  // Correctly retrieve repositories using getRepositoryToken
+  cardRepository = moduleFixture.get<Repository<Card>>(
+    getRepositoryToken(Card),
+  );
+  canvasRepository = moduleFixture.get<Repository<Canvas>>(
+    getRepositoryToken(Canvas),
+  );
 
   // Seed initial data if necessary
   await seedInitialData();
@@ -49,7 +53,7 @@ const seedInitialData = async () => {
   const canvas = canvasRepository.create({
     id: 1,
     name: 'Default Canvas',
-    // Add other necessary properties
+    // Add other necessary properties if any
   });
   await canvasRepository.save(canvas);
 
