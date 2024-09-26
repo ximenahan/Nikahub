@@ -2,5 +2,16 @@
 // allows you to do things like:
 // expect(element).toHaveTextContent(/react/i)
 // learn more: https://github.com/testing-library/jest-dom
+
+// src/setupTests.js
 import '@testing-library/jest-dom';
 process.env.REACT_APP_API_URL = 'http://localhost:3001'; // Set environment variable for tests
+
+// Mock console.log globally
+beforeAll(() => {
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+  });
+  
+  afterAll(() => {
+    console.log.mockRestore();
+  });

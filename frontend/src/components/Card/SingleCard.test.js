@@ -1,8 +1,22 @@
-// components/Card/SingleCard.test.js
+// SingleCard.test.js
 
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import SingleCard from './SingleCard';
+
+// Suppress the warning for react-markdown
+beforeAll(() => {
+  jest.spyOn(console, 'error').mockImplementation((message) => {
+    if (message.includes('ReactMarkdown')) {
+      return;
+    }
+    console.error(message);
+  });
+});
+
+afterAll(() => {
+  console.error.mockRestore();
+});
 
 jest.useFakeTimers();
 
@@ -39,7 +53,7 @@ describe('SingleCard Component', () => {
     expect(contentElement).toBeInTheDocument();
   });
 
-  test('enters edit mode on double-click and updates content on blur', () => {
+  test('enters edit mode on double-click and updates content on blur', async () => {
     render(
       <SingleCard
         card={mockCard}
@@ -57,7 +71,10 @@ describe('SingleCard Component', () => {
     fireEvent.change(textarea, { target: { value: 'Updated content' } });
     fireEvent.blur(textarea);
 
-    expect(mockUpdateCard).toHaveBeenCalledWith(mockCard.id, { content: 'Updated content' });
+    // Since updateCard might be called asynchronously, wait for it
+    await waitFor(() => {
+      expect(mockUpdateCard).toHaveBeenCalledWith(mockCard.id, { content: 'Updated content' });
+    });
   });
 
   test('calls deleteCard when delete button is clicked', () => {
@@ -75,7 +92,7 @@ describe('SingleCard Component', () => {
     expect(mockDeleteCard).toHaveBeenCalledWith(mockCard.id);
   });
 
-  test('drags the card when header is dragged', () => {
+  test('drags the card when header is dragged', async () => {
     render(
       <SingleCard
         card={mockCard}
@@ -86,23 +103,21 @@ describe('SingleCard Component', () => {
 
     const header = screen.getByTestId('card-header');
 
-    // Simulate mouse down on header
+    // Simulate drag events
     fireEvent.mouseDown(header, { clientX: 100, clientY: 100 });
-
-    // Simulate mouse move
     fireEvent.mouseMove(window, { clientX: 150, clientY: 150 });
-
-    // Simulate mouse up
     fireEvent.mouseUp(window);
 
-    // Since debouncedUpdateCardRef is debounced, we need to advance timers
+    // Since debouncedUpdateCardRef is debounced, advance timers
     jest.runAllTimers();
 
-    expect(mockUpdateCard).toHaveBeenCalled();
-    // You may add additional assertions to check the updated position
+    // Wait for the mock function to be called
+    await waitFor(() => {
+      expect(mockUpdateCard).toHaveBeenCalled();
+    });
   });
 
-  test('resizes the card when resize handle is dragged', () => {
+  test('resizes the card when resize handle is dragged', async () => {
     render(
       <SingleCard
         card={mockCard}
@@ -113,19 +128,17 @@ describe('SingleCard Component', () => {
 
     const resizeHandle = screen.getByTestId('card-resize-handle');
 
-    // Simulate mouse down on resize handle
+    // Simulate resize events
     fireEvent.mouseDown(resizeHandle, { clientX: 200, clientY: 150 });
-
-    // Simulate mouse move
     fireEvent.mouseMove(window, { clientX: 250, clientY: 200 });
-
-    // Simulate mouse up
     fireEvent.mouseUp(window);
 
-    // Since debouncedUpdateCardRef is debounced, we need to advance timers
+    // Since debouncedUpdateCardRef is debounced, advance timers
     jest.runAllTimers();
 
-    expect(mockUpdateCard).toHaveBeenCalled();
-    // You may add additional assertions to check the updated size
+    // Wait for the mock function to be called
+    await waitFor(() => {
+      expect(mockUpdateCard).toHaveBeenCalled();
+    });
   });
 });

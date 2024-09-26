@@ -1,21 +1,30 @@
 // Canvas.test.js
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import Canvas from './Canvas';
 import { fetchCanvases } from '../../services/canvasService';
 import { fetchCards, createCard } from '../../services/cardService';
 
+
+// Suppress the warning for react-markdown
+beforeAll(() => {
+  jest.spyOn(console, 'error').mockImplementation((message) => {
+    if (message.includes('ReactMarkdown')) {
+      return;
+    }
+    console.error(message);
+  });
+});
+
 // Mock the API functions
 jest.mock('../../services/canvasService', () => ({
   fetchCanvases: jest.fn(),
-  // ... other functions if needed ...
 }));
 
 jest.mock('../../services/cardService', () => ({
   fetchCards: jest.fn(),
   createCard: jest.fn(),
-  // ... other functions if needed ...
 }));
 
 describe('Canvas Component', () => {
@@ -50,9 +59,7 @@ describe('Canvas Component', () => {
     render(<Canvas />);
 
     // Wait for the canvases to load
-    await waitFor(() => {
-      expect(screen.getByText('Test Canvas')).toBeInTheDocument();
-    });
+    await screen.findByText('Test Canvas');
 
     // Select the canvas
     fireEvent.click(screen.getByText('Test Canvas'));
@@ -63,9 +70,8 @@ describe('Canvas Component', () => {
     // Simulate double-click
     fireEvent.doubleClick(canvasArea);
 
-    // Wait for the new card to appear
-    await waitFor(() => {
-      expect(screen.getByText('Click to edit')).toBeInTheDocument();
-    });
+    // Wait for the new card to appear using findByText
+    const newCardContent = await screen.findByText('Click to edit');
+    expect(newCardContent).toBeInTheDocument();
   });
 });
