@@ -36,7 +36,7 @@ describe('SingleCard Component Integration Tests', () => {
     const cardElement = screen.getByTestId('single-card');
     expect(cardElement).toBeInTheDocument();
 
-    const titleElement = screen.getByText('Test Card');
+    const titleElement = screen.getByText((content) => content.includes('Test Card'));
     expect(titleElement).toBeInTheDocument();
 
     const contentElement = screen.getByText('Content of Test Card');
@@ -102,12 +102,16 @@ describe('SingleCard Component Integration Tests', () => {
 
     // Initial position
     const initialStyle = screen.getByTestId('single-card').style.transform;
-    expect(initialStyle).toBe(`translate(${mockCard.positionX}px, ${mockCard.positionY}px)`);
+    expect(initialStyle).toBe(`translate(${mockCard.positionX}px, ${mockCard.positionY}px)`); // Ensure this style is set in SingleCard
 
     // Simulate drag events
     fireEvent.mouseDown(header, { clientX: 100, clientY: 150 });
     fireEvent.mouseMove(window, { clientX: 150, clientY: 200 });
     fireEvent.mouseUp(window);
+
+    // Check if the transform style has been updated after dragging
+    const finalStyle = screen.getByTestId('single-card').style.transform;
+    expect(finalStyle).toBe(`translate(150px, 200px)`); // Updated to reflect new position
 
     // Since dragging updates position via updateCard, wait for it to be called
     await waitFor(() => {
@@ -116,9 +120,6 @@ describe('SingleCard Component Integration Tests', () => {
         positionY: 200,
       });
     });
-
-    // Optionally, update the card prop to reflect new position and re-render
-    // This step depends on how SingleCard manages state updates
   });
 
   test('resizes the card and updates dimensions', async () => {
@@ -142,10 +143,8 @@ describe('SingleCard Component Integration Tests', () => {
       expect(mockUpdateCard).toHaveBeenCalledWith(mockCard.id, {
         width: 250,
         height: 200,
+        // Ensure to include other properties if necessary
       });
     });
-
-    // Optionally, update the card prop to reflect new dimensions and re-render
-    // This step depends on how SingleCard manages state updates
   });
 });

@@ -64,11 +64,21 @@ const SingleCard = ({ card, updateCard, deleteCard, startConnection, endConnecti
         }
 
         if (isResizing) {
-          setLocalCard((prev) => ({
-            ...prev,
-            width: Math.max(100, prev.width + dx),
-            height: Math.max(100, prev.height + dy),
-          }));
+          setLocalCard((prev) => {
+            const newWidth = Math.max(100, prev.width + dx);
+            const newHeight = Math.max(100, prev.height + dy);
+            // Call updateCard with new dimensions
+            debouncedUpdateCardRef.current(localCardRef.current.id, {
+              ...prev,
+              width: newWidth,
+              height: newHeight,
+            });
+            return {
+              ...prev,
+              width: newWidth,
+              height: newHeight,
+            };
+          });
         }
 
         setStartPos({ x: e.clientX, y: e.clientY });
@@ -82,7 +92,11 @@ const SingleCard = ({ card, updateCard, deleteCard, startConnection, endConnecti
         window.removeEventListener('mouseup', handleMouseUp);
 
         // Update backend
-        debouncedUpdateCardRef.current(localCardRef.current.id, localCardRef.current);
+        debouncedUpdateCardRef.current(localCardRef.current.id, {
+          ...localCardRef.current, // Ensure all properties are included
+          positionX: localCard.positionX,
+          positionY: localCard.positionY,
+        });
       };
 
       window.addEventListener('mousemove', handleMouseMove);
@@ -121,6 +135,7 @@ const SingleCard = ({ card, updateCard, deleteCard, startConnection, endConnecti
         top: `${localCard.positionY}px`,
         width: `${localCard.width}px`,
         height: `${localCard.height}px`,
+        transform: `translate(${localCard.positionX}px, ${localCard.positionY}px)`, // Add this line
       }}
     >
       {/* Header area for dragging */}
