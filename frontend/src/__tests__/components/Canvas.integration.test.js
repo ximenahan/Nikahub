@@ -6,6 +6,9 @@ import Canvas from '../../components/Canvas/Canvas';
 import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
 
+// Mock react-markdown directly in the test file
+jest.mock('react-markdown', () => ({ children }) => <div>{children}</div>);
+
 // Initialize axios-mock-adapter
 let mock;
 
