@@ -1,18 +1,15 @@
-// jest.config.js
+// src/setupTests.js
+import '@testing-library/jest-dom';
+import dotenv from 'dotenv';
 
-module.exports = {
-    roots: ['<rootDir>/src'],
-    moduleFileExtensions: ['js', 'jsx', 'json', 'node'],
-    transform: {
-      '^.+\\.jsx?$': 'babel-jest',
-    },
-    transformIgnorePatterns: [
-        '/node_modules/(?!(react-markdown|another-esm-package)/)',
-      ],
-      
-    setupFilesAfterEnv: ['<rootDir>/src/setupTests.js'],
-    moduleNameMapper: {
-      '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
-    },
-    testEnvironment: 'jsdom', // Ensure using jsdom for React components
-};
+// Load environment variables from .env.test
+dotenv.config({ path: '.env.test' });
+
+// Mock console.log globally
+beforeAll(() => {
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+});
+  
+afterAll(() => {
+    console.log.mockRestore();
+});
