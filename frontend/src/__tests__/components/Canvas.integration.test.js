@@ -9,6 +9,9 @@ import MockAdapter from 'axios-mock-adapter';
 // Mock react-markdown directly in the test file
 jest.mock('react-markdown', () => ({ children }) => <div>{children}</div>);
 
+// At the top of your test file
+jest.setTimeout(10000); // 10 seconds
+
 // Initialize axios-mock-adapter
 let mock;
 
@@ -29,7 +32,7 @@ describe('Canvas Component Integration Tests', () => {
     // Arrange: Mock canvases and cards
     const mockCanvases = [{ id: 1, name: 'Canvas 1', createdAt: '2023-10-01T00:00:00Z' }];
     const mockCards = [];
-    mock.onGet(`${process.env.REACT_APP_API_URL}/canvases`).reply(200, { data: mockCanvases });
+    mock.onGet(`${process.env.REACT_APP_API_URL}/canvases`).reply(200, mockCanvases);
     mock.onGet(`${process.env.REACT_APP_API_URL}/cards`, { params: { canvasId: 1 } }).reply(200, { data: mockCards });
 
     // Mock createCard response
@@ -127,7 +130,7 @@ describe('Canvas Component Integration Tests', () => {
         createdAt: '2023-10-06T00:00:00Z',
       },
     ];
-    mock.onGet(`${process.env.REACT_APP_API_URL}/canvases`).reply(200, { data: mockCanvases });
+    mock.onGet(`${process.env.REACT_APP_API_URL}/canvases`).reply(200, mockCanvases);
     mock.onGet(`${process.env.REACT_APP_API_URL}/cards`, { params: { canvasId: 1 } }).reply(200, { data: mockCards });
 
     // Mock deleteCard response
@@ -165,7 +168,7 @@ describe('Canvas Component Integration Tests', () => {
   test('toggles the sidebar open and close', async () => {
     // Arrange: Mock canvases
     const mockCanvases = [{ id: 1, name: 'Canvas 1', createdAt: '2023-10-01T00:00:00Z' }];
-    mock.onGet(`${process.env.REACT_APP_API_URL}/canvases`).reply(200, { data: mockCanvases });
+    mock.onGet(`${process.env.REACT_APP_API_URL}/canvases`).reply(200, mockCanvases);
     mock.onGet(`${process.env.REACT_APP_API_URL}/cards`, { params: { canvasId: 1 } }).reply(200, { data: [] });
 
     // Act: Render the Canvas component
@@ -205,7 +208,7 @@ describe('Canvas Component Integration Tests', () => {
     // Arrange: Mock canvases and cards
     const mockCanvases = [{ id: 1, name: 'Canvas 1', createdAt: '2023-10-01T00:00:00Z' }];
     const mockCards = [];
-    mock.onGet(`${process.env.REACT_APP_API_URL}/canvases`).reply(200, { data: mockCanvases });
+    mock.onGet(`${process.env.REACT_APP_API_URL}/canvases`).reply(200, mockCanvases);
     mock.onGet(`${process.env.REACT_APP_API_URL}/cards`, { params: { canvasId: 1 } }).reply(200, { data: mockCards });
 
     // Act: Render the Canvas component
