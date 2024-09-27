@@ -5,6 +5,12 @@
 
 // src/setupTests.js
 import '@testing-library/jest-dom';
+import dotenv from 'dotenv';
+
+
+  // Load environment variables from .env.test
+  dotenv.config({ path: '.env.test' });
+
 process.env.REACT_APP_API_URL = 'http://localhost:3001'; // Set environment variable for tests
 
 // Mock console.log globally
@@ -15,3 +21,5 @@ beforeAll(() => {
   afterAll(() => {
     console.log.mockRestore();
   });
+
+

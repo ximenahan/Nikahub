@@ -4,7 +4,22 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import SingleCard from '../../components/Card/SingleCard';
 
+// Mock the services if SingleCard interacts with any external services
+// jest.mock('../../services/cardService'); // Uncomment if necessary
+
 describe('SingleCard Component Integration Tests', () => {
+  beforeAll(() => {
+    // Enable modern fake timers
+    jest.useFakeTimers('modern');
+    // Set system time to October 5, 2023, at 00:00:00 UTC
+    jest.setSystemTime(new Date('2023-10-05T00:00:00Z'));
+  });
+
+  afterAll(() => {
+    // Restore real timers after all tests are done
+    jest.useRealTimers();
+  });
+
   const mockCard = {
     id: 201,
     title: 'Test Card',
@@ -14,7 +29,7 @@ describe('SingleCard Component Integration Tests', () => {
     width: 200,
     height: 150,
     canvasId: 1,
-    createdAt: '2023-10-07T00:00:00Z',
+    createdAt: new Date('2023-10-05T00:00:00Z'), // Aligned with mocked date
   };
 
   const mockUpdateCard = jest.fn();
@@ -36,7 +51,7 @@ describe('SingleCard Component Integration Tests', () => {
     const cardElement = screen.getByTestId('single-card');
     expect(cardElement).toBeInTheDocument();
 
-    const titleElement = screen.getByText((content) => content.includes('Test Card'));
+    const titleElement = screen.getByText('Test Card');
     expect(titleElement).toBeInTheDocument();
 
     const contentElement = screen.getByText('Content of Test Card');
@@ -86,7 +101,9 @@ describe('SingleCard Component Integration Tests', () => {
     fireEvent.click(deleteButton);
 
     // Assert: deleteCard should be called with correct ID
-    expect(mockDeleteCard).toHaveBeenCalledWith(mockCard.id);
+    await waitFor(() => {
+      expect(mockDeleteCard).toHaveBeenCalledWith(mockCard.id);
+    });
   });
 
   test('drags the card and updates position', async () => {
@@ -109,11 +126,12 @@ describe('SingleCard Component Integration Tests', () => {
     fireEvent.mouseMove(window, { clientX: 150, clientY: 200 });
     fireEvent.mouseUp(window);
 
-    // Check if the transform style has been updated after dragging
-    const finalStyle = screen.getByTestId('single-card').style.transform;
-    expect(finalStyle).toBe(`translate(150px, 200px)`); // Updated to reflect new position
+    // Assert: Check if the transform style has been updated
+    await waitFor(() => {
+      expect(screen.getByTestId('single-card')).toHaveStyle(`transform: translate(150px, 200px)`);
+    });
 
-    // Since dragging updates position via updateCard, wait for it to be called
+    // Assert: Check if updateCard was called with the correct arguments
     await waitFor(() => {
       expect(mockUpdateCard).toHaveBeenCalledWith(mockCard.id, {
         positionX: 150,

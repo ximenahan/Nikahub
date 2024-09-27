@@ -108,7 +108,7 @@ const SingleCard = ({ card, updateCard, deleteCard, startConnection, endConnecti
         window.removeEventListener('mouseup', handleMouseUp);
       };
     }
-  }, [isDragging, isResizing]); // Only depends on isDragging and isResizing
+  }, [isDragging, isResizing, localCard.positionX, localCard.positionY]); // Only depends on isDragging and isResizing
 
   const handleDoubleClick = (e) => {
     e.stopPropagation();

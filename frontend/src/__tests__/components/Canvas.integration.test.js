@@ -11,6 +11,18 @@ jest.mock('../../services/canvasService');
 jest.mock('../../services/cardService');
 
 describe('Canvas Component Integration Tests', () => {
+  beforeAll(() => {
+    // Enable modern fake timers
+    jest.useFakeTimers('modern');
+    // Set system time to October 5, 2023, at 00:00:00 UTC
+    jest.setSystemTime(new Date('2023-10-05T00:00:00Z'));
+  });
+
+  afterAll(() => {
+    // Restore real timers after all tests are done
+    jest.useRealTimers();
+  });
+
   beforeEach(() => {
     // Clear all mocks before each test
     jest.clearAllMocks();
@@ -27,9 +39,9 @@ describe('Canvas Component Integration Tests', () => {
     // Act: Render the Canvas component
     render(<Canvas />);
 
-    // Assert: Wait for canvases to be loaded and displayed
-    expect(fetchCanvases).toHaveBeenCalledTimes(1);
+    // Assert: Wait for fetchCanvases to be called and canvases to be displayed
     await waitFor(() => {
+      expect(fetchCanvases).toHaveBeenCalledTimes(1);
       mockCanvases.forEach(canvas => {
         expect(screen.getByText(canvas.name)).toBeInTheDocument();
       });
@@ -69,29 +81,39 @@ describe('Canvas Component Integration Tests', () => {
         createdAt: '2023-10-04T00:00:00Z',
       },
     ];
+    
+    // Initial fetch for canvases
     fetchCanvases.mockResolvedValueOnce({ data: mockCanvases });
-    fetchCards.mockResolvedValueOnce({ data: mockCards });
+    // Initial fetch for cards (assume default selected canvas is Canvas 1)
+    fetchCards.mockResolvedValueOnce({ data: mockCards.filter(card => card.canvasId === 1) });
 
     // Act: Render the Canvas component
     render(<Canvas />);
 
-    // Wait for canvases to load
-    await waitFor(() => {
-      expect(fetchCanvases).toHaveBeenCalledTimes(1);
-    });
+    // Wait for canvases and initial cards to load
+    await waitFor(() => expect(fetchCanvases).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(fetchCards).toHaveBeenCalledTimes(1));
 
     // Select the second canvas
-    const secondCanvas = screen.getByText('Canvas 2');
+    const secondCanvas = screen.getByTestId('canvas-item-2');
+    // Mock fetchCards to return cards for Canvas 2 when it's selected
+    fetchCards.mockResolvedValueOnce({ data: mockCards.filter(card => card.canvasId === 2) });
+
     fireEvent.click(secondCanvas);
 
     // Assert: fetchCards should be called again
-    expect(fetchCards).toHaveBeenCalledTimes(2); // Initial fetch + after selecting canvas
+    await waitFor(() => {
+      expect(fetchCards).toHaveBeenCalledTimes(2); // Initial fetch + after selecting canvas
+    });
 
     // Assert: Only cards associated with Canvas 2 are displayed
     await waitFor(() => {
       expect(screen.getByText('Card 2')).toBeInTheDocument();
     });
-    expect(screen.queryByText('Card 1')).not.toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.queryByText('Card 1')).not.toBeInTheDocument();
+    });
   });
 
   test('double-clicking on canvas creates a new card', async () => {
@@ -111,7 +133,7 @@ describe('Canvas Component Integration Tests', () => {
       width: 200,
       height: 150,
       canvasId: 1,
-      createdAt: '2023-10-05T00:00:00Z',
+      createdAt: new Date(), // This will be the mocked date
     };
     createCard.mockResolvedValueOnce({ data: newCard });
 
@@ -127,15 +149,17 @@ describe('Canvas Component Integration Tests', () => {
     fireEvent.doubleClick(canvasArea, { clientX: 150, clientY: 200 });
 
     // Assert: createCard should be called with correct parameters
-    expect(createCard).toHaveBeenCalledWith({
-      title: 'New Card',
-      content: '# New Card\n\nClick to edit',
-      positionX: expect.any(Number),
-      positionY: expect.any(Number),
-      width: 200,
-      height: 150,
-      canvasId: 1,
-      createdAt: expect.any(Date),
+    await waitFor(() => {
+      expect(createCard).toHaveBeenCalledWith({
+        title: 'New Card',
+        content: '# New Card\n\nClick to edit',
+        positionX: expect.any(Number),
+        positionY: expect.any(Number),
+        width: 200,
+        height: 150,
+        canvasId: 1,
+        createdAt: new Date('2023-10-05T00:00:00Z'), // Expect the mocked date
+      });
     });
 
     // Assert: The new card is added to the display
@@ -181,7 +205,9 @@ describe('Canvas Component Integration Tests', () => {
     fireEvent.click(deleteButton);
 
     // Assert: deleteCard should be called with correct ID
-    expect(deleteCard).toHaveBeenCalledWith(104);
+    await waitFor(() => {
+      expect(deleteCard).toHaveBeenCalledWith(104);
+    });
 
     // Assert: The card is removed from the display
     await waitFor(() => {
@@ -208,7 +234,7 @@ describe('Canvas Component Integration Tests', () => {
     expect(sidebar).toBeInTheDocument();
 
     // Find the toggle button (assuming it has a data-testid or is uniquely identifiable)
-    const toggleButton = screen.getByRole('button', { name: /toggle sidebar/i });
+    const toggleButton = screen.getByTestId('sidebar-toggle-button');
     fireEvent.click(toggleButton);
 
     // Sidebar should be hidden
@@ -250,7 +276,8 @@ describe('Canvas Component Integration Tests', () => {
     fireEvent.mouseDown(canvasArea, { button: 1, clientX: 100, clientY: 100 }); // Middle mouse button
     fireEvent.mouseMove(window, { clientX: 150, clientY: 150 });
     fireEvent.mouseUp(window);
+
     // Assert: Check if the transform style has been updated
-    expect(screen.getByRole('div')).toHaveStyle(`transform: translate(50px, 50px)`);
+    expect(canvasArea).toHaveStyle(`transform: translate(50px, 50px)`);
   });
 });

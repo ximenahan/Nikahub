@@ -1,3 +1,5 @@
+// src/components/Canvas/Canvas.jsx
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { fetchCards, createCard } from '../../services/cardService';
 import SingleCard from '../Card/SingleCard';
@@ -144,16 +146,21 @@ const Canvas = () => {
   }, []);
 
   return (
-    <div data-testid="canvas-component" // Add this line
-    className="flex h-screen overflow-hidden bg-gray-100 relative"
+    <div 
+      data-testid="canvas-component" // Outer container for Canvas
+      className="flex h-screen overflow-hidden bg-gray-100 relative"
     >
       {sidebarOpen && (
-        <div className="w-64 bg-white shadow-md p-4">
+        <div 
+          data-testid="sidebar" // Sidebar container
+          className="w-64 bg-white shadow-md p-4"
+        >
           <h2 className="text-xl font-bold mb-4">Canvases</h2>
-          <ul>
+          <ul data-testid="canvas-list"> {/* Canvas list */}
             {canvases.map(canvas => (
               <li
                 key={canvas.id}
+                data-testid={`canvas-item-${canvas.id}`} // Each canvas item
                 className={`cursor-pointer p-2 ${selectedCanvas === canvas.id ? 'bg-blue-200' : ''}`}
                 onClick={() => setSelectedCanvas(canvas.id)}
               >
@@ -164,7 +171,7 @@ const Canvas = () => {
         </div>
       )}
       <div 
-        data-testid="canvas-area" 
+        data-testid="canvas-area" // Canvas interaction area
         className="flex-grow relative"
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
@@ -174,11 +181,13 @@ const Canvas = () => {
       >
         <canvas
           ref={canvasRef}
+          data-testid="canvas-element" // Canvas HTML element
           className="absolute top-0 left-0 w-full h-full pointer-events-none"
           width={window.innerWidth}
           height={window.innerHeight}
         />
         <div 
+          data-testid="cards-container" // Container for draggable cards
           className="relative" 
           style={{ 
             transform: `translate(${canvasOffset.x}px, ${canvasOffset.y}px)`,
@@ -194,12 +203,17 @@ const Canvas = () => {
             />
           ))}
         </div>
-        <div className="absolute bottom-4 right-4 bg-white p-2 rounded-full shadow-md">
+        <div 
+          data-testid="move-icon-container" // Container for Move icon
+          className="absolute bottom-4 right-4 bg-white p-2 rounded-full shadow-md"
+        >
           <Move size={24} />
         </div>
         <button 
+          data-testid="sidebar-toggle-button" // Sidebar toggle button
           className="absolute top-4 left-4 bg-white p-2 rounded-full shadow-md"
           onClick={() => setSidebarOpen(!sidebarOpen)}
+          aria-label="Toggle sidebar"
         >
           {sidebarOpen ? <PanelLeftClose size={24} /> : <PanelLeftOpen size={24} />}
         </button>
