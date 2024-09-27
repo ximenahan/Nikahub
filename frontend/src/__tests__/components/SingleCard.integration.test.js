@@ -3,6 +3,23 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import SingleCard from '../../components/Card/SingleCard';
+import axios from 'axios';
+import MockAdapter from 'axios-mock-adapter';
+
+// Initialize axios-mock-adapter
+let mock;
+
+beforeAll(() => {
+  mock = new MockAdapter(axios);
+});
+
+afterEach(() => {
+  mock.reset();
+});
+
+afterAll(() => {
+  mock.restore();
+});
 
 describe('SingleCard Component Integration Tests', () => {
   const mockCard = {
@@ -21,8 +38,8 @@ describe('SingleCard Component Integration Tests', () => {
     render(
       <SingleCard
         card={mockCard}
-        updateCard={jest.fn()}
-        deleteCard={jest.fn()}
+        updateCard={() => {}}
+        deleteCard={() => {}}
       />
     );
 
@@ -43,7 +60,7 @@ describe('SingleCard Component Integration Tests', () => {
       <SingleCard
         card={mockCard}
         updateCard={mockUpdateCard}
-        deleteCard={jest.fn()}
+        deleteCard={() => {}}
       />
     );
 
@@ -74,7 +91,7 @@ describe('SingleCard Component Integration Tests', () => {
     render(
       <SingleCard
         card={mockCard}
-        updateCard={jest.fn()}
+        updateCard={() => {}}
         deleteCard={mockDeleteCard}
       />
     );
@@ -95,7 +112,7 @@ describe('SingleCard Component Integration Tests', () => {
       <SingleCard
         card={mockCard}
         updateCard={mockUpdateCard}
-        deleteCard={jest.fn()}
+        deleteCard={() => {}}
       />
     );
 
@@ -114,12 +131,9 @@ describe('SingleCard Component Integration Tests', () => {
     await waitFor(() => {
       expect(cardElement).toHaveStyle('transform: translate(150px, 200px)');
     });
-
-    await waitFor(() => {
-      expect(mockUpdateCard).toHaveBeenCalledWith(mockCard.id, {
-        positionX: 150,
-        positionY: 200,
-      });
+    expect(mockUpdateCard).toHaveBeenCalledWith(mockCard.id, {
+      positionX: 150,
+      positionY: 200,
     });
   });
 
@@ -130,7 +144,7 @@ describe('SingleCard Component Integration Tests', () => {
       <SingleCard
         card={mockCard}
         updateCard={mockUpdateCard}
-        deleteCard={jest.fn()}
+        deleteCard={() => {}}
       />
     );
 

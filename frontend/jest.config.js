@@ -23,7 +23,9 @@ module.exports = {
     // Mock static assets like CSS modules
     moduleNameMapper: {
       '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
+      '^react-markdown$': '<rootDir>/node_modules/react-markdown/__mocks__/index.js',
     },
+    //This line tells Jest that whenever react-markdown is imported, it should use the mock file located at <rootDir>/node_modules/react-markdown/__mocks__/index.js instead of the actual module.
 
 
     // Optionally, you can specify other Jest configurations here
