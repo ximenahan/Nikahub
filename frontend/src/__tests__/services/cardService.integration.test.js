@@ -92,12 +92,29 @@ describe('Card Service Integration Tests', () => {
       width: 200,
       height: 150,
       canvasId: 1,
-      createdAt: new Date(),
+      createdAt: new Date().toISOString(), // Ensure it's a string
     };
     const createdCard = { id: 103, ...newCard };
 
-    // Mock the POST request to /cards
-    mock.onPost(`${apiUrl}/cards`, newCard).reply(201, createdCard);
+    // Mock the POST request to /cards with flexible matching
+    mock.onPost(`${apiUrl}/cards`).reply((config) => {
+      const requestData = JSON.parse(config.data);
+      
+      // Validate the request data
+      expect(requestData).toMatchObject({
+        title: 'New Card',
+        content: '# New Card\n\nClick to edit',
+        positionX: 150,
+        positionY: 200,
+        width: 200,
+        height: 150,
+        canvasId: 1,
+        createdAt: expect.any(String),
+      });
+      
+      // Respond with the created card
+      return [201, createdCard];
+    });
 
     const response = await createCard(newCard);
     expect(response.data).toEqual(createdCard);

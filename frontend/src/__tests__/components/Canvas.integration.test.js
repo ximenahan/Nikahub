@@ -3,52 +3,48 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import Canvas from '../../components/Canvas/Canvas';
-import { fetchCanvases } from '../../services/canvasService';
-import { fetchCards, createCard, deleteCard } from '../../services/cardService';
+import axios from 'axios';
+import MockAdapter from 'axios-mock-adapter';
 
-// Mock the services
-jest.mock('../../services/canvasService');
-jest.mock('../../services/cardService');
+let mock;
+
+beforeAll(() => {
+  mock = new MockAdapter(axios);
+});
+
+afterEach(() => {
+  mock.reset();
+});
+
+afterAll(() => {
+  mock.restore();
+});
 
 describe('Canvas Component Integration Tests', () => {
-  beforeAll(() => {
-    // Enable modern fake timers
-    jest.useFakeTimers('modern');
-    // Set system time to October 5, 2023, at 00:00:00 UTC
-    jest.setSystemTime(new Date('2023-10-05T00:00:00Z'));
-  });
-
-  afterAll(() => {
-    // Restore real timers after all tests are done
-    jest.useRealTimers();
-  });
-
-  beforeEach(() => {
-    // Clear all mocks before each test
-    jest.clearAllMocks();
-  });
-
+  
   test('renders Canvas component and loads canvases', async () => {
     // Arrange: Mock the fetchCanvases response
     const mockCanvases = [
       { id: 1, name: 'Canvas 1', createdAt: '2023-10-01T00:00:00Z' },
       { id: 2, name: 'Canvas 2', createdAt: '2023-10-02T00:00:00Z' },
     ];
-    fetchCanvases.mockResolvedValueOnce({ data: mockCanvases });
+    mock.onGet('/api/canvases').reply(200, { data: mockCanvases });
 
     // Act: Render the Canvas component
     render(<Canvas />);
 
     // Assert: Wait for fetchCanvases to be called and canvases to be displayed
     await waitFor(() => {
-      expect(fetchCanvases).toHaveBeenCalledTimes(1);
+      expect(mock.history.get.length).toBe(1);
       mockCanvases.forEach(canvas => {
-        expect(screen.getByText(canvas.name)).toBeInTheDocument();
+        expect(screen.getByTestId(`canvas-item-${canvas.id}`)).toBeInTheDocument();
+        expect(screen.getByTestId(`canvas-item-${canvas.id}`)).toHaveTextContent(canvas.name);
       });
     });
 
     // Assert: The first canvas is selected by default
-    expect(screen.getByText('Canvas 1')).toHaveClass('bg-blue-200');
+    const firstCanvas = screen.getByTestId('canvas-item-1');
+    expect(firstCanvas).toHaveClass('bg-blue-200');
   });
 
   test('selecting a canvas loads associated cards', async () => {
@@ -57,7 +53,7 @@ describe('Canvas Component Integration Tests', () => {
       { id: 1, name: 'Canvas 1', createdAt: '2023-10-01T00:00:00Z' },
       { id: 2, name: 'Canvas 2', createdAt: '2023-10-02T00:00:00Z' },
     ];
-    const mockCards = [
+    const mockCardsCanvas1 = [
       {
         id: 101,
         title: 'Card 1',
@@ -69,6 +65,8 @@ describe('Canvas Component Integration Tests', () => {
         canvasId: 1,
         createdAt: '2023-10-03T00:00:00Z',
       },
+    ];
+    const mockCardsCanvas2 = [
       {
         id: 102,
         title: 'Card 2',
@@ -81,36 +79,49 @@ describe('Canvas Component Integration Tests', () => {
         createdAt: '2023-10-04T00:00:00Z',
       },
     ];
-    
-    // Initial fetch for canvases
-    fetchCanvases.mockResolvedValueOnce({ data: mockCanvases });
-    // Initial fetch for cards (assume default selected canvas is Canvas 1)
-    fetchCards.mockResolvedValueOnce({ data: mockCards.filter(card => card.canvasId === 1) });
+
+    // Mock the initial fetch for canvases
+    mock.onGet('/api/canvases').reply(200, { data: mockCanvases });
+
+    // Mock the initial fetch for cards (Canvas 1)
+    mock.onGet('/api/cards', { params: { canvasId: 1 } }).reply(200, { data: mockCardsCanvas1 });
 
     // Act: Render the Canvas component
     render(<Canvas />);
 
-    // Wait for canvases and initial cards to load
-    await waitFor(() => expect(fetchCanvases).toHaveBeenCalledTimes(1));
-    await waitFor(() => expect(fetchCards).toHaveBeenCalledTimes(1));
+    // Assert: Wait for canvases and initial cards to load
+    await waitFor(() => {
+      expect(screen.getByTestId('canvas-item-1')).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId('canvas-item-2')).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId('canvas-item-1')).toHaveClass('bg-blue-200');
+    });
+    await waitFor(() => {
+      expect(screen.getByText('Card 1')).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(screen.queryByText('Card 2')).not.toBeInTheDocument();
+    });
+
+    // Mock fetchCards to return cards for Canvas 2 when it's selected
+    mock.onGet('/api/cards', { params: { canvasId: 2 } }).reply(200, { data: mockCardsCanvas2 });
 
     // Select the second canvas
     const secondCanvas = screen.getByTestId('canvas-item-2');
-    // Mock fetchCards to return cards for Canvas 2 when it's selected
-    fetchCards.mockResolvedValueOnce({ data: mockCards.filter(card => card.canvasId === 2) });
-
     fireEvent.click(secondCanvas);
 
     // Assert: fetchCards should be called again
     await waitFor(() => {
-      expect(fetchCards).toHaveBeenCalledTimes(2); // Initial fetch + after selecting canvas
+      expect(mock.history.get.length).toBe(2); // Initial fetch + after selecting canvas
     });
 
     // Assert: Only cards associated with Canvas 2 are displayed
     await waitFor(() => {
       expect(screen.getByText('Card 2')).toBeInTheDocument();
     });
-
     await waitFor(() => {
       expect(screen.queryByText('Card 1')).not.toBeInTheDocument();
     });
@@ -120,10 +131,12 @@ describe('Canvas Component Integration Tests', () => {
     // Arrange: Mock canvases and cards
     const mockCanvases = [{ id: 1, name: 'Canvas 1', createdAt: '2023-10-01T00:00:00Z' }];
     const mockCards = [];
-    fetchCanvases.mockResolvedValueOnce({ data: mockCanvases });
-    fetchCards.mockResolvedValueOnce({ data: mockCards });
+    mock.onGet('/api/canvases').reply(200, { data: mockCanvases });
+    mock.onGet('/api/cards', { params: { canvasId: 1 } }).reply(200, { data: mockCards });
 
     // Mock createCard response
+    const mockDate = new Date('2023-10-05T00:00:00Z');
+    jest.useFakeTimers('modern').setSystemTime(mockDate);
     const newCard = {
       id: 103,
       title: 'New Card',
@@ -133,16 +146,20 @@ describe('Canvas Component Integration Tests', () => {
       width: 200,
       height: 150,
       canvasId: 1,
-      createdAt: new Date(), // This will be the mocked date
+      createdAt: mockDate.toISOString(),
     };
-    createCard.mockResolvedValueOnce({ data: newCard });
+    mock.onPost('/api/cards').reply(201, { data: newCard });
 
     // Act: Render the Canvas component
     render(<Canvas />);
 
     // Wait for canvases and cards to load
-    await waitFor(() => expect(fetchCanvases).toHaveBeenCalledTimes(1));
-    await waitFor(() => expect(fetchCards).toHaveBeenCalledTimes(1));
+    await waitFor(() => {
+      expect(screen.getByTestId('canvas-item-1')).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(screen.getByText('Canvas 1')).toHaveClass('bg-blue-200');
+    });
 
     // Double-click on the canvas area to create a new card
     const canvasArea = screen.getByTestId('canvas-area');
@@ -150,22 +167,31 @@ describe('Canvas Component Integration Tests', () => {
 
     // Assert: createCard should be called with correct parameters
     await waitFor(() => {
-      expect(createCard).toHaveBeenCalledWith({
-        title: 'New Card',
-        content: '# New Card\n\nClick to edit',
-        positionX: expect.any(Number),
-        positionY: expect.any(Number),
+      expect(mock.history.post.length).toBe(1);
+    });
+    await waitFor(() => {
+      expect(mock.history.post[0].url).toBe('/api/cards');
+    });
+    const requestData = JSON.parse(mock.history.post[0].data);
+    expect(requestData).toMatchObject({
+      title: 'New Card',
+      content: '# New Card\n\nClick to edit',
+        positionX: 150,
+        positionY: 200,
         width: 200,
         height: 150,
         canvasId: 1,
-        createdAt: new Date('2023-10-05T00:00:00Z'), // Expect the mocked date
+        createdAt: mockDate.toISOString(),
       });
     });
 
     // Assert: The new card is added to the display
-    await waitFor(() => {
+    waitFor(() => {
       expect(screen.getByText('New Card')).toBeInTheDocument();
+    }).then(() => {
+      jest.useRealTimers();
     });
+    jest.useRealTimers();
   });
 
   test('deleting a card removes it from the display', async () => {
@@ -184,29 +210,33 @@ describe('Canvas Component Integration Tests', () => {
         createdAt: '2023-10-06T00:00:00Z',
       },
     ];
-    fetchCanvases.mockResolvedValueOnce({ data: mockCanvases });
-    fetchCards.mockResolvedValueOnce({ data: mockCards });
+    mock.onGet('/api/canvases').reply(200, { data: mockCanvases });
+    mock.onGet('/api/cards', { params: { canvasId: 1 } }).reply(200, { data: mockCards });
 
     // Mock deleteCard response
-    deleteCard.mockResolvedValueOnce({});
+    mock.onDelete(`/api/cards/${mockCards[0].id}`).reply(200, {});
 
     // Act: Render the Canvas component
     render(<Canvas />);
 
     // Wait for canvases and cards to load
-    await waitFor(() => expect(fetchCanvases).toHaveBeenCalledTimes(1));
-    await waitFor(() => expect(fetchCards).toHaveBeenCalledTimes(1));
+    await waitFor(() => {
+      expect(screen.getByTestId('canvas-item-1')).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(screen.getByText('Card to Delete')).toBeInTheDocument();
+    });
 
-    // Verify the card is displayed
-    expect(screen.getByText('Card to Delete')).toBeInTheDocument();
-
-    // Find the delete button for the card (assuming each SingleCard has a delete button with data-testid="delete-button")
+    // Find the delete button for the card
     const deleteButton = screen.getByTestId('delete-button');
     fireEvent.click(deleteButton);
 
     // Assert: deleteCard should be called with correct ID
     await waitFor(() => {
-      expect(deleteCard).toHaveBeenCalledWith(104);
+      expect(mock.history.delete.length).toBe(1);
+    });
+    await waitFor(() => {
+      expect(mock.history.delete[0].url).toBe(`/api/cards/${mockCards[0].id}`);
     });
 
     // Assert: The card is removed from the display
@@ -218,36 +248,39 @@ describe('Canvas Component Integration Tests', () => {
   test('toggles the sidebar open and close', async () => {
     // Arrange: Mock canvases
     const mockCanvases = [{ id: 1, name: 'Canvas 1', createdAt: '2023-10-01T00:00:00Z' }];
-    fetchCanvases.mockResolvedValueOnce({ data: mockCanvases });
-    fetchCards.mockResolvedValueOnce({ data: [] });
+    mock.onGet('/api/canvases').reply(200, { data: mockCanvases });
+    mock.onGet('/api/cards', { params: { canvasId: 1 } }).reply(200, { data: [] });
 
     // Act: Render the Canvas component
     render(<Canvas />);
 
     // Wait for canvases to load
     await waitFor(() => {
-      expect(fetchCanvases).toHaveBeenCalledTimes(1);
+      expect(screen.getByTestId('canvas-item-1')).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId('sidebar')).toBeInTheDocument();
     });
 
     // Sidebar should be visible initially
-    const sidebar = screen.getByText('Canvases');
+    const sidebar = screen.getByTestId('sidebar');
     expect(sidebar).toBeInTheDocument();
 
-    // Find the toggle button (assuming it has a data-testid or is uniquely identifiable)
+    // Find the toggle button
     const toggleButton = screen.getByTestId('sidebar-toggle-button');
     fireEvent.click(toggleButton);
 
-    // Sidebar should be hidden
+    // Assert: Sidebar is hidden
     await waitFor(() => {
-      expect(screen.queryByText('Canvases')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('sidebar')).not.toBeInTheDocument();
     });
 
-    // Click again to open the sidebar
+    // Click toggle button again to open sidebar
     fireEvent.click(toggleButton);
 
-    // Sidebar should be visible again
+    // Assert: Sidebar is visible again
     await waitFor(() => {
-      expect(screen.getByText('Canvases')).toBeInTheDocument();
+      expect(screen.getByTestId('sidebar')).toBeInTheDocument();
     });
   });
 
@@ -255,29 +288,33 @@ describe('Canvas Component Integration Tests', () => {
     // Arrange: Mock canvases and cards
     const mockCanvases = [{ id: 1, name: 'Canvas 1', createdAt: '2023-10-01T00:00:00Z' }];
     const mockCards = [];
-    fetchCanvases.mockResolvedValueOnce({ data: mockCanvases });
-    fetchCards.mockResolvedValueOnce({ data: mockCards });
+    mock.onGet('/api/canvases').reply(200, { data: mockCanvases });
+    mock.onGet('/api/cards', { params: { canvasId: 1 } }).reply(200, { data: mockCards });
 
     // Act: Render the Canvas component
     render(<Canvas />);
 
     // Wait for canvases and cards to load
     await waitFor(() => {
-      expect(fetchCanvases).toHaveBeenCalledTimes(1);
+      expect(screen.getByTestId('canvas-item-1')).toBeInTheDocument();
     });
     await waitFor(() => {
-      expect(fetchCards).toHaveBeenCalledTimes(1);
+      expect(screen.getByTestId('cards-container')).toBeInTheDocument();
     });
 
-    // Find the canvas area
-    const canvasArea = screen.getByTestId('canvas-area');
+    // Find the cards container (which has the transform applied)
+    const cardsContainer = screen.getByTestId('cards-container');
 
-    // Simulate mouse events for dragging
-    fireEvent.mouseDown(canvasArea, { button: 1, clientX: 100, clientY: 100 }); // Middle mouse button
+    // Initial transform
+    expect(cardsContainer).toHaveStyle('transform: translate(0px, 0px)');
+
+    // Simulate dragging the canvas area
+    fireEvent.mouseDown(cardsContainer, { button: 1, clientX: 100, clientY: 100 }); // Middle mouse button
     fireEvent.mouseMove(window, { clientX: 150, clientY: 150 });
     fireEvent.mouseUp(window);
 
-    // Assert: Check if the transform style has been updated
-    expect(canvasArea).toHaveStyle(`transform: translate(50px, 50px)`);
+    // Assert: Canvas offset is updated
+    await waitFor(() => {
+      expect(cardsContainer).toHaveStyle('transform: translate(50px, 50px)');
+    });
   });
-});

@@ -3,23 +3,24 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import SingleCard from '../../components/Card/SingleCard';
+import axios from 'axios';
+import MockAdapter from 'axios-mock-adapter';
 
-// Mock the services if SingleCard interacts with any external services
-// jest.mock('../../services/cardService'); // Uncomment if necessary
+let mock;
+
+beforeAll(() => {
+  mock = new MockAdapter(axios);
+});
+
+afterEach(() => {
+  mock.reset();
+});
+
+afterAll(() => {
+  mock.restore();
+});
 
 describe('SingleCard Component Integration Tests', () => {
-  beforeAll(() => {
-    // Enable modern fake timers
-    jest.useFakeTimers('modern');
-    // Set system time to October 5, 2023, at 00:00:00 UTC
-    jest.setSystemTime(new Date('2023-10-05T00:00:00Z'));
-  });
-
-  afterAll(() => {
-    // Restore real timers after all tests are done
-    jest.useRealTimers();
-  });
-
   const mockCard = {
     id: 201,
     title: 'Test Card',
@@ -29,22 +30,15 @@ describe('SingleCard Component Integration Tests', () => {
     width: 200,
     height: 150,
     canvasId: 1,
-    createdAt: new Date('2023-10-05T00:00:00Z'), // Aligned with mocked date
+    createdAt: '2023-10-07T00:00:00Z',
   };
-
-  const mockUpdateCard = jest.fn();
-  const mockDeleteCard = jest.fn();
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
 
   test('renders SingleCard component with correct content', () => {
     render(
       <SingleCard
         card={mockCard}
-        updateCard={mockUpdateCard}
-        deleteCard={mockDeleteCard}
+        updateCard={() => {}}
+        deleteCard={() => {}}
       />
     );
 
@@ -59,11 +53,13 @@ describe('SingleCard Component Integration Tests', () => {
   });
 
   test('enters edit mode on double-click and updates content on blur', async () => {
+    const mockUpdateCard = jest.fn();
+
     render(
       <SingleCard
         card={mockCard}
         updateCard={mockUpdateCard}
-        deleteCard={mockDeleteCard}
+        deleteCard={() => {}}
       />
     );
 
@@ -89,10 +85,12 @@ describe('SingleCard Component Integration Tests', () => {
   });
 
   test('calls deleteCard when delete button is clicked', async () => {
+    const mockDeleteCard = jest.fn();
+
     render(
       <SingleCard
         card={mockCard}
-        updateCard={mockUpdateCard}
+        updateCard={() => {}}
         deleteCard={mockDeleteCard}
       />
     );
@@ -107,19 +105,21 @@ describe('SingleCard Component Integration Tests', () => {
   });
 
   test('drags the card and updates position', async () => {
+    const mockUpdateCard = jest.fn();
+
     render(
       <SingleCard
         card={mockCard}
         updateCard={mockUpdateCard}
-        deleteCard={mockDeleteCard}
+        deleteCard={() => {}}
       />
     );
 
     const header = screen.getByTestId('card-header');
 
     // Initial position
-    const initialStyle = screen.getByTestId('single-card').style.transform;
-    expect(initialStyle).toBe(`translate(${mockCard.positionX}px, ${mockCard.positionY}px)`); // Ensure this style is set in SingleCard
+    const cardElement = screen.getByTestId('single-card');
+    expect(cardElement).toHaveStyle(`transform: translate(${mockCard.positionX}px, ${mockCard.positionY}px)`);
 
     // Simulate drag events
     fireEvent.mouseDown(header, { clientX: 100, clientY: 150 });
@@ -128,24 +128,22 @@ describe('SingleCard Component Integration Tests', () => {
 
     // Assert: Check if the transform style has been updated
     await waitFor(() => {
-      expect(screen.getByTestId('single-card')).toHaveStyle(`transform: translate(150px, 200px)`);
+      expect(cardElement).toHaveStyle('transform: translate(150px, 200px)');
     });
-
-    // Assert: Check if updateCard was called with the correct arguments
-    await waitFor(() => {
-      expect(mockUpdateCard).toHaveBeenCalledWith(mockCard.id, {
-        positionX: 150,
-        positionY: 200,
-      });
+    expect(mockUpdateCard).toHaveBeenCalledWith(mockCard.id, {
+      positionX: 150,
+      positionY: 200,
     });
   });
 
   test('resizes the card and updates dimensions', async () => {
+    const mockUpdateCard = jest.fn();
+
     render(
       <SingleCard
         card={mockCard}
         updateCard={mockUpdateCard}
-        deleteCard={mockDeleteCard}
+        deleteCard={() => {}}
       />
     );
 
@@ -161,7 +159,6 @@ describe('SingleCard Component Integration Tests', () => {
       expect(mockUpdateCard).toHaveBeenCalledWith(mockCard.id, {
         width: 250,
         height: 200,
-        // Ensure to include other properties if necessary
       });
     });
   });
