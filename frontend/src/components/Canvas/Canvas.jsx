@@ -43,7 +43,7 @@ const Canvas = () => {
 
   async function loadCards(canvasId) {
     try {
-      const response = await fetchCards();
+      const response = await fetchCards(canvasId);
       console.log('Cards loaded:', response.data);
       const filteredCards = response.data.filter(card => card.canvasId === canvasId);
       setCards(filteredCards);

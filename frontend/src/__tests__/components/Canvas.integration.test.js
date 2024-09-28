@@ -9,13 +9,19 @@ import MockAdapter from 'axios-mock-adapter';
 // Mock react-markdown directly in the test file
 jest.mock('react-markdown', () => ({ children }) => <div>{children}</div>);
 
+
+// Set the API URL environment variable
+beforeAll(() => {
+  process.env.REACT_APP_API_URL = 'http://localhost:4000/api';
+});
+
 // At the top of your test file
 jest.setTimeout(10000); // 10 seconds
 
-// Initialize axios-mock-adapter
+// Initialize axios-mock-adapter before each test
 let mock;
 
-beforeAll(() => {
+beforeEach(() => {
   mock = new MockAdapter(axios);
 });
 
@@ -32,8 +38,9 @@ describe('Canvas Component Integration Tests', () => {
     // Arrange: Mock canvases and cards
     const mockCanvases = [{ id: 1, name: 'Canvas 1', createdAt: '2023-10-01T00:00:00Z' }];
     const mockCards = [];
+    
     mock.onGet(`${process.env.REACT_APP_API_URL}/canvases`).reply(200, mockCanvases);
-    mock.onGet(`${process.env.REACT_APP_API_URL}/cards`, { params: { canvasId: 1 } }).reply(200, { data: mockCards });
+    mock.onGet(`${process.env.REACT_APP_API_URL}/cards`, { params: { canvasId: 1 } }).reply(200, mockCards);
 
     // Mock createCard response
     const mockDate = new Date('2023-10-05T00:00:00Z');
@@ -131,7 +138,7 @@ describe('Canvas Component Integration Tests', () => {
       },
     ];
     mock.onGet(`${process.env.REACT_APP_API_URL}/canvases`).reply(200, mockCanvases);
-    mock.onGet(`${process.env.REACT_APP_API_URL}/cards`, { params: { canvasId: 1 } }).reply(200, { data: mockCards });
+    mock.onGet(`${process.env.REACT_APP_API_URL}/cards`, { params: { canvasId: 1 } }).reply(200, mockCards);
 
     // Mock deleteCard response
     mock.onDelete(`${process.env.REACT_APP_API_URL}/cards/${mockCards[0].id}`).reply(200);
@@ -169,7 +176,7 @@ describe('Canvas Component Integration Tests', () => {
     // Arrange: Mock canvases
     const mockCanvases = [{ id: 1, name: 'Canvas 1', createdAt: '2023-10-01T00:00:00Z' }];
     mock.onGet(`${process.env.REACT_APP_API_URL}/canvases`).reply(200, mockCanvases);
-    mock.onGet(`${process.env.REACT_APP_API_URL}/cards`, { params: { canvasId: 1 } }).reply(200, { data: [] });
+    mock.onGet(`${process.env.REACT_APP_API_URL}/cards`, { params: { canvasId: 1 } }).reply(200, []);
 
     // Act: Render the Canvas component
     render(<Canvas />);
@@ -209,7 +216,7 @@ describe('Canvas Component Integration Tests', () => {
     const mockCanvases = [{ id: 1, name: 'Canvas 1', createdAt: '2023-10-01T00:00:00Z' }];
     const mockCards = [];
     mock.onGet(`${process.env.REACT_APP_API_URL}/canvases`).reply(200, mockCanvases);
-    mock.onGet(`${process.env.REACT_APP_API_URL}/cards`, { params: { canvasId: 1 } }).reply(200, { data: mockCards });
+    mock.onGet(`${process.env.REACT_APP_API_URL}/cards`, { params: { canvasId: 1 } }).reply(200, mockCards);
 
     // Act: Render the Canvas component
     render(<Canvas />);
