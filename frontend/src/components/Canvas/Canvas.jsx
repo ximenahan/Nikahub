@@ -6,6 +6,7 @@ import SingleCard from '../Card/SingleCard';
 import { Move, PanelLeftOpen, PanelLeftClose } from 'lucide-react';
 import { updateCard as updateCardAPI } from '../../services/cardService';
 import { deleteCard as deleteCardAPI } from '../../services/cardService';
+import ErrorBoundary from '../ErrorBoundary';
 
 const Canvas = () => {
   const [cards, setCards] = useState([]);
@@ -146,79 +147,81 @@ const Canvas = () => {
   }, []);
 
   return (
-    <div 
-      data-testid="canvas-component" // Outer container for Canvas
-      className="flex h-screen overflow-hidden bg-gray-100 relative"
-    >
-      {sidebarOpen && (
-        <div 
-          data-testid="sidebar" // Sidebar container
-          className="w-64 bg-white shadow-md p-4"
-        >
-          <h2 className="text-xl font-bold mb-4">Canvases</h2>
-          <ul data-testid="canvas-list"> {/* Canvas list */}
-            {canvases.map(canvas => (
-              <li
-                key={canvas.id}
-                data-testid={`canvas-item-${canvas.id}`} // Each canvas item
-                className={`cursor-pointer p-2 ${selectedCanvas === canvas.id ? 'bg-blue-200' : ''}`}
-                onClick={() => setSelectedCanvas(canvas.id)}
-              >
-                {canvas.name}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+    <ErrorBoundary>
       <div 
-        data-testid="canvas-area" // Canvas interaction area
-        className="flex-grow relative"
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        onDoubleClick={handleCanvasDoubleClick}
+        data-testid="canvas-component" // Outer container for Canvas
+        className="flex h-screen overflow-hidden bg-gray-100 relative"
       >
-        <canvas
-          ref={canvasRef}
-          data-testid="canvas-element" // Canvas HTML element
-          className="absolute top-0 left-0 w-full h-full pointer-events-none"
-          width={window.innerWidth}
-          height={window.innerHeight}
-        />
+        {sidebarOpen && (
+          <div 
+            data-testid="sidebar" // Sidebar container
+            className="w-64 bg-white shadow-md p-4"
+          >
+            <h2 className="text-xl font-bold mb-4">Canvases</h2>
+            <ul data-testid="canvas-list"> {/* Canvas list */}
+              {canvases.map(canvas => (
+                <li
+                  key={canvas.id}
+                  data-testid={`canvas-item-${canvas.id}`} // Each canvas item
+                  className={`cursor-pointer p-2 ${selectedCanvas === canvas.id ? 'bg-blue-200' : ''}`}
+                  onClick={() => setSelectedCanvas(canvas.id)}
+                >
+                  {canvas.name}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         <div 
-          data-testid="cards-container" // Container for draggable cards
-          className="relative" 
-          style={{ 
-            transform: `translate(${canvasOffset.x}px, ${canvasOffset.y}px)`,
-            cursor: isDragging ? 'grabbing' : 'default'
-          }}
+          data-testid="canvas-area" // Canvas interaction area
+          className="flex-grow relative"
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+          onDoubleClick={handleCanvasDoubleClick}
         >
-          {cards.map(card => (
-            <SingleCard 
-              key={card.id} 
-              card={card}
-              updateCard={updateCard}
-              deleteCard={deleteCard}
-            />
-          ))}
+          <canvas
+            ref={canvasRef}
+            data-testid="canvas-element" // Canvas HTML element
+            className="absolute top-0 left-0 w-full h-full pointer-events-none"
+            width={window.innerWidth}
+            height={window.innerHeight}
+          />
+          <div 
+            data-testid="cards-container" // Container for draggable cards
+            className="relative" 
+            style={{ 
+              transform: `translate(${canvasOffset.x}px, ${canvasOffset.y}px)`,
+              cursor: isDragging ? 'grabbing' : 'default'
+            }}
+          >
+            {cards.map(card => (
+              <SingleCard 
+                key={card.id} 
+                card={card}
+                updateCard={updateCard}
+                deleteCard={deleteCard}
+              />
+            ))}
+          </div>
+          <div 
+            data-testid="move-icon-container" // Container for Move icon
+            className="absolute bottom-4 right-4 bg-white p-2 rounded-full shadow-md"
+          >
+            <Move size={24} />
+          </div>
+          <button 
+            data-testid="sidebar-toggle-button" // Sidebar toggle button
+            className="absolute top-4 left-4 bg-white p-2 rounded-full shadow-md"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            aria-label="Toggle sidebar"
+          >
+            {sidebarOpen ? <PanelLeftClose size={24} /> : <PanelLeftOpen size={24} />}
+          </button>
         </div>
-        <div 
-          data-testid="move-icon-container" // Container for Move icon
-          className="absolute bottom-4 right-4 bg-white p-2 rounded-full shadow-md"
-        >
-          <Move size={24} />
-        </div>
-        <button 
-          data-testid="sidebar-toggle-button" // Sidebar toggle button
-          className="absolute top-4 left-4 bg-white p-2 rounded-full shadow-md"
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          aria-label="Toggle sidebar"
-        >
-          {sidebarOpen ? <PanelLeftClose size={24} /> : <PanelLeftOpen size={24} />}
-        </button>
       </div>
-    </div>
+    </ErrorBoundary>
   );
 }
 

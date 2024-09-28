@@ -38,11 +38,16 @@ describe('SingleCard Component Integration Tests', () => {
   };
 
   test('renders SingleCard component with correct content', () => {
+    
+    // Act: Render the SingleCard component with mock functions
+    const mockUpdateCard = jest.fn();
+    const mockDeleteCard = jest.fn();
+    
     render(
       <SingleCard
         card={mockCard}
-        updateCard={() => {}}
-        deleteCard={() => {}}
+        updateCard={mockUpdateCard}
+        deleteCard={mockDeleteCard}
       />
     );
 
@@ -120,7 +125,7 @@ describe('SingleCard Component Integration Tests', () => {
       <SingleCard
         card={mockCard}
         updateCard={mockUpdateCard}
-        deleteCard={() => {}}
+        deleteCard={jest.fn()}
       />
     );
   

@@ -10,11 +10,6 @@ import MockAdapter from 'axios-mock-adapter';
 jest.mock('react-markdown', () => ({ children }) => <div>{children}</div>);
 
 
-// Set the API URL environment variable
-beforeAll(() => {
-  process.env.REACT_APP_API_URL = 'http://localhost:4000/api';
-});
-
 // At the top of your test file
 jest.setTimeout(10000); // 10 seconds
 
@@ -31,6 +26,7 @@ afterEach(() => {
 
 afterAll(() => {
   mock.restore();
+  jest.useRealTimers();
 });
 
 describe('Canvas Component Integration Tests', () => {
@@ -38,13 +34,14 @@ describe('Canvas Component Integration Tests', () => {
     // Arrange: Mock canvases and cards
     const mockCanvases = [{ id: 1, name: 'Canvas 1', createdAt: '2023-10-01T00:00:00Z' }];
     const mockCards = [];
-    
+
     mock.onGet(`${process.env.REACT_APP_API_URL}/canvases`).reply(200, mockCanvases);
-    mock.onGet(`${process.env.REACT_APP_API_URL}/cards`, { params: { canvasId: 1 } }).reply(200, mockCards);
+    // Use RegExp to match any GET request to /cards regardless of query params
+    mock.onGet(new RegExp(`${process.env.REACT_APP_API_URL}/cards.*`)).reply(200, mockCards);
 
     // Mock createCard response
     const mockDate = new Date('2023-10-05T00:00:00Z');
-    jest.useFakeTimers('modern').setSystemTime(mockDate);
+    jest.useFakeTimers().setSystemTime(mockDate);
     const newCard = {
       title: 'New Card',
       content: '# New Card\n\nClick to edit',
