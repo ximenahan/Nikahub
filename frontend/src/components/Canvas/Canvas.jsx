@@ -87,25 +87,22 @@ const Canvas = () => {
   }, [canvasOffset, selectedCanvas]);
 
 
-  const handleMouseDown = useCallback((e) => {
-    if (e.button === 1) { // Middle mouse button
-      setIsDragging(true);
-      setStartPos({ x: e.clientX, y: e.clientY });
-    }
-  }, []);
+  const handleMouseDown = (e) => {
+    if (e.button !== 0) return; // Only respond to left mouse button
+    setIsDragging(true);
+    setStartPos({ x: e.clientX - canvasOffset.x, y: e.clientY - canvasOffset.y });
+  };
 
-  const handleMouseMove = useCallback((e) => {
-    if (isDragging) {
-      const dx = e.clientX - startPos.x;
-      const dy = e.clientY - startPos.y;
-      setCanvasOffset(prev => ({ x: prev.x + dx, y: prev.y + dy }));
-      setStartPos({ x: e.clientX, y: e.clientY });
-    }
-  }, [isDragging, startPos]);
+  const handleMouseMove = (e) => {
+    if (!isDragging) return;
+    const newX = e.clientX - startPos.x;
+    const newY = e.clientY - startPos.y;
+    setCanvasOffset({ x: newX, y: newY });
+  };
 
-  const handleMouseUp = useCallback(() => {
+  const handleMouseUp = () => {
     setIsDragging(false);
-  }, []);
+  };
 
   const updateCard = useCallback(async (id, updates) => {
     try {
@@ -190,7 +187,7 @@ const Canvas = () => {
             className="relative" 
             style={{ 
               transform: `translate(${canvasOffset.x}px, ${canvasOffset.y}px)`,
-              cursor: isDragging ? 'grabbing' : 'default'
+              cursor: isDragging ? 'grabbing' : 'grab'
             }}
           >
             {cards.map(card => (
