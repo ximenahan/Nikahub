@@ -25,11 +25,11 @@ const Canvas = () => {
   async function loadCanvases() {
     try {
       const { fetchCanvases } = await import('../../services/canvasService');
-      const response = await fetchCanvases();
-      console.log('Canvases loaded:', response.data);
-      setCanvases(response.data);
-      if (response.data.length > 0) {
-        setSelectedCanvas(response.data[0].id);
+      const canvasesData = await fetchCanvases();
+      console.log('Canvases loaded:', canvasesData);
+      setCanvases(canvasesData);
+      if (canvasesData.length > 0) {
+        setSelectedCanvas(canvasesData[0].id);
       }
     } catch (error) {
       console.error('Error loading canvases:', error);
@@ -44,9 +44,9 @@ const Canvas = () => {
 
   async function loadCards(canvasId) {
     try {
-      const response = await fetchCards(canvasId);
-      console.log('Cards loaded:', response.data);
-      setCards(response.data); // Assume backend already filters by canvasId
+      const cardsData = await fetchCards(canvasId);
+      console.log('Cards loaded:', cardsData);
+      setCards(cardsData);
     } catch (error) {
       console.error('Error loading cards:', error);
     }
@@ -76,11 +76,9 @@ const Canvas = () => {
       console.log('Creating new card:', newCard);
 
       try {
-        const response = await createCard(newCard);
-        console.log('New card created:', response.data);
-        setCards((prevCards) => [...prevCards, response.data]);
-        // Alternatively, reload all cards
-        // await loadCards(selectedCanvas);
+        const newCardData = await createCard(newCard);
+        console.log('New card created:', newCardData);
+        setCards((prevCards) => [...prevCards, newCardData]);
       } catch (error) {
         console.error('Error creating card:', error);
         console.error('Server response:', error.response?.data);
