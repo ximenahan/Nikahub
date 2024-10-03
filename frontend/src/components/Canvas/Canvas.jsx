@@ -155,11 +155,11 @@ const Canvas = () => {
             className="w-64 bg-white shadow-md p-4"
           >
             <h2 className="text-xl font-bold mb-4">Canvases</h2>
-            <ul data-testid="canvas-list"> {/* Canvas list */}
-              {canvases.map(canvas => (
+            <ul data-testid="canvas-list">
+              {Array.isArray(canvases) && canvases.map(canvas => (
                 <li
                   key={canvas.id}
-                  data-testid={`canvas-item-${canvas.id}`} // Each canvas item
+                  data-testid={`canvas-item-${canvas.id}`}
                   className={`cursor-pointer p-2 ${selectedCanvas === canvas.id ? 'bg-blue-200' : ''}`}
                   onClick={() => setSelectedCanvas(canvas.id)}
                 >

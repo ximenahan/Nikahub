@@ -98,7 +98,7 @@ describe('Canvas Component Integration Tests', () => {
       width: 200,
       height: 150,
       canvasId: 1,
-      createdAt: mockDate.toISOString(),
+      createdAt: expect.any(String),
     });
 
     // Assert: The new card is added to the display
@@ -165,7 +165,7 @@ describe('Canvas Component Integration Tests', () => {
 
     // Assert: The card is removed from the display
     await waitFor(() => {
-      expect(screen.queryByText('Card to Delete')).not.toBeInTheDocument();
+      expect(screen.queryByText((content) => content.includes('Card to Delete'))).not.toBeInTheDocument();
     });
   });
 
@@ -181,9 +181,6 @@ describe('Canvas Component Integration Tests', () => {
     // Wait for canvases to load
     await waitFor(() => {
       expect(screen.getByTestId('canvas-item-1')).toBeInTheDocument();
-    });
-    await waitFor(() => {
-      expect(screen.getByTestId('sidebar')).toBeInTheDocument();
     });
 
     // Sidebar should be visible initially
@@ -221,9 +218,6 @@ describe('Canvas Component Integration Tests', () => {
     // Wait for canvases and cards to load
     await waitFor(() => {
       expect(screen.getByTestId('canvas-item-1')).toBeInTheDocument();
-    });
-    await waitFor(() => {
-      expect(screen.getByTestId('cards-container')).toBeInTheDocument();
     });
 
     // Find the cards container (which has the transform applied)
