@@ -46,8 +46,7 @@ const Canvas = () => {
     try {
       const response = await fetchCards(canvasId);
       console.log('Cards loaded:', response.data);
-      const filteredCards = response.data.filter(card => card.canvasId === canvasId);
-      setCards(filteredCards);
+      setCards(response.data); // Assume backend already filters by canvasId
     } catch (error) {
       console.error('Error loading cards:', error);
     }
@@ -71,7 +70,7 @@ const Canvas = () => {
         width: 200,
         height: 150,
         canvasId: selectedCanvas,
-        createdAt: new Date(),
+        createdAt: new Date().toISOString(), // Ensure it's a string
       };
 
       console.log('Creating new card:', newCard);

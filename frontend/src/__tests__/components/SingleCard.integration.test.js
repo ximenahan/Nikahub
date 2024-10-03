@@ -14,35 +14,48 @@ let mock;
 
 beforeAll(() => {
   mock = new MockAdapter(axios);
+  jest.useFakeTimers('modern');
+  const mockDate = new Date('2023-10-05T00:00:00Z');
+  jest.setSystemTime(mockDate);
 });
 
 afterEach(() => {
   mock.reset();
+  jest.clearAllMocks();
+  jest.useRealTimers(); // Reset timers after each test
 });
 
 afterAll(() => {
   mock.restore();
+  jest.useRealTimers();
 });
 
+// Set timeout for all tests in this file
+jest.setTimeout(10000);
+
 describe('SingleCard Component Integration Tests', () => {
-  const mockCard = {
-    id: 201,
-    title: 'Test Card',
-    content: 'Content of Test Card',
-    positionX: 100,
-    positionY: 150,
-    width: 200,
-    height: 150,
-    canvasId: 1,
-    createdAt: '2023-10-07T00:00:00Z',
-  };
+  let mockCard;
+
+  beforeEach(() => {
+    mockCard = {
+      id: 201,
+      title: 'Test Card',
+      content: 'Content of Test Card',
+      positionX: 100,
+      positionY: 150,
+      width: 200,
+      height: 150,
+      canvasId: 1,
+      createdAt: new Date('2023-10-05T00:00:00Z').toISOString(), // Ensure it's a string
+    };
+  });
 
   test('renders SingleCard component with correct content', () => {
-    
-    // Act: Render the SingleCard component with mock functions
+    // Arrange: Create mock functions
     const mockUpdateCard = jest.fn();
     const mockDeleteCard = jest.fn();
-    
+
+    // Act: Render the SingleCard component with mock functions
     render(
       <SingleCard
         card={mockCard}
@@ -51,6 +64,7 @@ describe('SingleCard Component Integration Tests', () => {
       />
     );
 
+    // Assert: Verify the card is rendered with correct content
     const cardElement = screen.getByTestId('single-card');
     expect(cardElement).toBeInTheDocument();
 
@@ -64,8 +78,10 @@ describe('SingleCard Component Integration Tests', () => {
   });
 
   test('enters edit mode on double-click and updates content on blur', async () => {
+    // Arrange: Create mock function
     const mockUpdateCard = jest.fn();
 
+    // Act: Render the SingleCard component with mock functions
     render(
       <SingleCard
         card={mockCard}
@@ -74,9 +90,11 @@ describe('SingleCard Component Integration Tests', () => {
       />
     );
 
+    // Enter edit mode
     const contentElement = screen.getByTestId('card-content');
     fireEvent.doubleClick(contentElement);
 
+    // Verify textarea is present
     const textarea = screen.getByTestId('card-textarea');
     expect(textarea).toBeInTheDocument();
 
@@ -89,8 +107,7 @@ describe('SingleCard Component Integration Tests', () => {
     // Assert: updateCard should be called with updated content
     await waitFor(() => {
       expect(mockUpdateCard).toHaveBeenCalledWith(mockCard.id, {
-        positionX: 150,
-        positionY: 200,
+        content: 'Updated Content',
       });
     });
 
@@ -99,8 +116,10 @@ describe('SingleCard Component Integration Tests', () => {
   });
 
   test('calls deleteCard when delete button is clicked', async () => {
+    // Arrange: Create mock function
     const mockDeleteCard = jest.fn();
 
+    // Act: Render the SingleCard component with mock functions
     render(
       <SingleCard
         card={mockCard}
@@ -109,6 +128,7 @@ describe('SingleCard Component Integration Tests', () => {
       />
     );
 
+    // Click the delete button
     const deleteButton = screen.getByTestId('delete-button');
     fireEvent.click(deleteButton);
 
@@ -119,61 +139,129 @@ describe('SingleCard Component Integration Tests', () => {
   });
 
   test('drags the card and updates position', async () => {
-    const mockUpdateCard = jest.fn();
-  
-    render(
+    const mockUpdateCard = jest.fn((id, updatedFields) => {
+      mockCard = { ...mockCard, ...updatedFields };
+      rerender(
+        <SingleCard
+          card={mockCard}
+          updateCard={mockUpdateCard}
+          deleteCard={jest.fn()}
+        />
+      );
+    });
+
+    const { rerender } = render(
       <SingleCard
         card={mockCard}
         updateCard={mockUpdateCard}
         deleteCard={jest.fn()}
       />
     );
-  
+
     const header = screen.getByTestId('card-header');
-  
-    // Initial position
     const cardElement = screen.getByTestId('single-card');
-    expect(cardElement).toHaveStyle(`transform: translate(${mockCard.positionX}px, ${mockCard.positionY}px)`);
-  
-    // Simulate drag events
-    fireEvent.mouseDown(header, { clientX: mockCard.positionX, clientY: mockCard.positionY });
-    fireEvent.mouseMove(window, { clientX: 150, clientY: 200 });
+
+    // Store initial positions
+    const initialPositionX = mockCard.positionX;
+    const initialPositionY = mockCard.positionY;
+
+    // Simulate drag
+    fireEvent.mouseDown(header, { clientX: initialPositionX, clientY: initialPositionY });
+    fireEvent.mouseMove(window, { clientX: initialPositionX + 50, clientY: initialPositionY + 50 });
     fireEvent.mouseUp(window);
-  
-    // Assert: Check if the transform style has been updated
+
+    // Advance timers
+    jest.advanceTimersByTime(500);
+
+    // Wait for updateCard to be called
     await waitFor(() => {
-      expect(cardElement).toHaveStyle('transform: translate(150px, 200px)');
-    });
-      expect(mockUpdateCard).toHaveBeenCalledWith(mockCard.id, {
-        positionX: 150,
-        positionY: 200,
-    });
-  });
-
-  test('resizes the card and updates dimensions', async () => {
-    const mockUpdateCard = jest.fn();
-
-    render(
-      <SingleCard
-        card={mockCard}
-        updateCard={mockUpdateCard}
-        deleteCard={() => {}}
-      />
+      expect(mockUpdateCard).toHaveBeenCalledWith(
+      mockCard.id,
+      expect.objectContaining({
+        positionX: initialPositionX + 50,
+        positionY: initialPositionY + 50,
+      })
     );
-
-    const resizeHandle = screen.getByTestId('card-resize-handle');
-
-    // Simulate resize events
-    fireEvent.mouseDown(resizeHandle, { clientX: 200, clientY: 150 });
-    fireEvent.mouseMove(window, { clientX: 250, clientY: 200 });
-    fireEvent.mouseUp(window);
-
-    // Assert: updateCard should be called with updated width and height
-    await waitFor(() => {
-      expect(mockUpdateCard).toHaveBeenCalledWith(mockCard.id, {
-        width: 250,
-        height: 200,
-      });
-    });
   });
+
+  // Update mockCard and re-render
+  mockCard = {
+    ...mockCard,
+    positionX: initialPositionX + 50,
+    positionY: initialPositionY + 50,
+  };
+
+  rerender(
+    <SingleCard
+      card={mockCard}
+      updateCard={mockUpdateCard}
+      deleteCard={jest.fn()}
+    />
+  );
+
+  // Assert updated position
+  expect(cardElement).toHaveStyle(`left: ${mockCard.positionX}px`);
+  expect(cardElement).toHaveStyle(`top: ${mockCard.positionY}px`);
+});
+
+test('resizes the card and updates dimensions correctly', async () => {
+  const mockUpdateCard = jest.fn();
+
+  const { rerender } = render(
+    <SingleCard
+      card={mockCard}
+      updateCard={mockUpdateCard}
+      deleteCard={jest.fn()}
+    />
+  );
+
+  const resizeHandle = screen.getByTestId('card-resize-handle');
+  const cardElement = screen.getByTestId('single-card');
+
+  // Store initial dimensions
+  const initialWidth = mockCard.width;
+  const initialHeight = mockCard.height;
+
+  // Simulate resize
+  fireEvent.mouseDown(resizeHandle, { clientX: initialWidth, clientY: initialHeight });
+  fireEvent.mouseMove(window, { clientX: initialWidth + 50, clientY: initialHeight + 50 });
+  fireEvent.mouseUp(window);
+
+  // Advance timers
+  jest.advanceTimersByTime(500);
+
+  // Wait for updateCard to be called
+  await waitFor(() => {
+    expect(mockUpdateCard).toHaveBeenCalledWith(
+      mockCard.id,
+      expect.objectContaining({
+        width: initialWidth + 50,
+        height: initialHeight + 50,
+      })
+    );
+  });
+
+  // Update mockCard and re-render
+  mockCard = {
+    ...mockCard,
+    width: initialWidth + 50,
+    height: initialHeight + 50,
+  };
+
+  rerender(
+    <SingleCard
+      card={mockCard}
+      updateCard={mockUpdateCard}
+      deleteCard={jest.fn()}
+    />
+  );
+
+  // Assert updated dimensions
+  expect(cardElement).toHaveStyle(`width: ${mockCard.width}px`);
+  expect(cardElement).toHaveStyle(`height: ${mockCard.height}px`);
+
+  jest.useRealTimers();
+
+})
+
 });

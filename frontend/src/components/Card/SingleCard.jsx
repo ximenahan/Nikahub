@@ -135,7 +135,7 @@ const SingleCard = ({ card, updateCard, deleteCard, startConnection, endConnecti
         top: `${localCard.positionY}px`,
         width: `${localCard.width}px`,
         height: `${localCard.height}px`,
-        transform: `translate(${localCard.positionX}px, ${localCard.positionY}px)`, // Add this line
+        // Removed transform to prevent conflicts with left and top
       }}
     >
       {/* Header area for dragging */}
