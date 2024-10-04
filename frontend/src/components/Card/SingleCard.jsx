@@ -128,7 +128,7 @@ const SingleCard = ({ card, updateCard, deleteCard, startConnection, endConnecti
 
   return (
     <div
-      data-testid="single-card"  
+      data-testid={`card-${localCard.id}`}  // Updated to include card ID
       className="absolute bg-white shadow-lg rounded-lg overflow-hidden"
       style={{
         left: `${localCard.positionX}px`,

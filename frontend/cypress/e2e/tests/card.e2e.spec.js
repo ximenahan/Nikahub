@@ -2,7 +2,7 @@
 /// <reference types="cypress" />
 
 // Import Cypress
-import { cy } from 'cypress';
+/* global cy */
 
 describe('SingleCard E2E Tests', () => {
   const mockCard = {
