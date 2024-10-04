@@ -1,7 +1,15 @@
-/** @type {import('ts-jest').JestConfigWithTsJest} **/
+// jest.config.js
+
 module.exports = {
-  testEnvironment: "node",
+  moduleFileExtensions: ['js', 'json', 'ts'],
+  rootDir: 'src',
+  testRegex: '.*\\.spec\\.ts$',
   transform: {
-    "^.+.tsx?$": ["ts-jest",{}],
+    '^.+\\.(t|j)s$': 'ts-jest',
   },
+  collectCoverageFrom: ['**/*.(t|j)s'],
+  coverageDirectory: '../coverage/unit',
+  testEnvironment: 'node',
+  // Exclude integration and E2E tests from unit tests
+  testPathIgnorePatterns: ['/test/integration/', '/test/e2e/'],
 };
