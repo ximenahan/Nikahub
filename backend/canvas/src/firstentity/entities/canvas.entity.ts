@@ -1,3 +1,4 @@
+// src/firstentity/entities/canvas.entity.ts
 // eslint-disable-next-line prettier/prettier
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { Card } from './card.entity';
@@ -27,6 +28,6 @@ export class Canvas {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @OneToMany(() => Card, (card) => card.canvas)
+  @OneToMany(() => Card, (card) => card.canvas, { cascade: false })
   cards: Card[];
 }

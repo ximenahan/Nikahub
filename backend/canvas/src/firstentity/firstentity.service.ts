@@ -1,3 +1,4 @@
+// src/firstentity/firstentity.service.ts
 import { Injectable } from '@nestjs/common';
 import { CreateFirstentityDto } from './dto/create-firstentity.dto';
 import { UpdateFirstentityDto } from './dto/update-firstentity.dto';
@@ -5,7 +6,8 @@ import { UpdateFirstentityDto } from './dto/update-firstentity.dto';
 @Injectable()
 export class FirstentityService {
   create(createFirstentityDto: CreateFirstentityDto) {
-    return 'This action adds a new firstentity';
+    // Use createFirstentityDto to create a new entity
+    return `This action adds a new firstentity with data: ${JSON.stringify(createFirstentityDto)}`;
   }
 
   findAll() {
@@ -17,7 +19,8 @@ export class FirstentityService {
   }
 
   update(id: number, updateFirstentityDto: UpdateFirstentityDto) {
-    return `This action updates a #${id} firstentity`;
+    // Use updateFirstentityDto to update the entity
+    return `This action updates a #${id} firstentity with data: ${JSON.stringify(updateFirstentityDto)}`;
   }
 
   remove(id: number) {

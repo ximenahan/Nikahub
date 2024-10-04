@@ -1,3 +1,4 @@
+// e2e/canvas.e2e-spec.ts
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
@@ -139,11 +140,17 @@ describe('CanvasController (e2e)', () => {
       const canvasId = response.body.id;
 
       // Add a card to the canvas
-      // Assuming there's an endpoint to create cards; if not, use repository directly
       await request(app.getHttpServer())
-        .post(`/canvases/${canvasId}/cards`)
+        .post('/cards')
         .send({
-          /* card data */
+          title: 'Test Card',
+          content: 'This is a test card',
+          positionX: 100,
+          positionY: 100,
+          width: 200,
+          height: 200,
+          canvasId: canvasId,
+          createdAt: new Date().toISOString(),
         })
         .expect(201);
 

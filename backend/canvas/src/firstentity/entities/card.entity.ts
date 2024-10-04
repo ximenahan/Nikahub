@@ -1,4 +1,5 @@
 // src/firstentity/entities/card.entity.ts
+
 // eslint-disable-next-line prettier/prettier
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { Canvas } from './canvas.entity';
@@ -56,7 +57,7 @@ export class Card {
   @Column('float')
   height: number;
 
-  @ManyToOne(() => Canvas, (canvas) => canvas.cards)
+  @ManyToOne(() => Canvas, (canvas) => canvas.cards, { onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'canvasId' })
   canvas: Canvas;
 
