@@ -89,7 +89,7 @@ describe('Canvas E2E Tests', () => {
 
         // Mock POST /cards
         cy.intercept('POST', `${apiUrl}/cards`, (req) => {
-            cy.wrap(req.body).should('deep.equal', {
+            expect(req.body).to.deep.equal({
                 title: 'New Card',
                 content: '# New Card\n\nClick to edit',
                 positionX: 150,
@@ -104,8 +104,8 @@ describe('Canvas E2E Tests', () => {
             });
         }).as('createCard');
 
-        // Double-click on the canvas area
-        cy.get('[data-testid="canvas-area"]').dblclick(150, 200);
+        // Double-click on the canvas area at specific coordinates
+        cy.get('[data-testid="canvas-area"]').trigger('dblclick', { clientX: 150, clientY: 200 });
 
         // Wait for the POST request to complete
         cy.wait('@createCard').then(() => {
@@ -268,5 +268,36 @@ describe('Canvas E2E Tests', () => {
                 cy.get('[data-testid="single-card"]').should('have.length', 1);
                 cy.contains('Canvas 2 Card').should('be.visible');
             });
+    });
+
+    it('should render all canvas elements correctly', () => {
+        // Check for the main canvas component
+        cy.get('[data-testid="canvas-component"]').should('be.visible');
+
+        // Check for the canvas element
+        cy.get('[data-testid="canvas-element"]').should('be.visible');
+
+        // Check for the move icon container
+        cy.get('[data-testid="move-icon-container"]').should('be.visible');
+
+        // The error message should not be visible by default
+        cy.get('[data-testid="error-message"]').should('not.exist');
+    });
+
+    it('should display error message when loading fails', () => {
+        // Mock a failed API call
+        cy.intercept('GET', `${apiUrl}/canvases`, {
+            statusCode: 500,
+            body: { error: 'Server error' }
+        }).as('getCanvasesFailed');
+
+        // Visit the Canvas page
+        cy.visit('/canvas');
+
+        // Wait for the failed request
+        cy.wait('@getCanvasesFailed');
+
+        // Check if the error message is displayed
+        cy.get('[data-testid="error-message"]').should('be.visible');
     });
 });
