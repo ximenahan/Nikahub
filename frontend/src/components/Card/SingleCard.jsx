@@ -1,3 +1,4 @@
+// src/components/Card/SingleCard.jsx
 import React, { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import debounce from 'lodash.debounce';
