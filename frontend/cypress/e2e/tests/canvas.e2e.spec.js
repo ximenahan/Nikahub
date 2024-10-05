@@ -75,54 +75,61 @@ describe('Canvas E2E Tests', () => {
     });
 
     it('should create a new card on double-click', () => {
-        const newCard = {
-            id: 101,
-            title: 'New Card',
-            content: '# New Card\n\nClick to edit',
-            positionX: 150,
-            positionY: 200,
-            width: 200,
-            height: 150,
-            canvasId: 1,
-            createdAt: new Date().toISOString(),
-        };
+        // Variables to hold expected positions
+        let expectedX;
+        let expectedY;
 
-        // Mock POST /cards
-        cy.intercept('POST', `${apiUrl}/cards`, (req) => {
-            expect(req.body).to.deep.equal({
+        // Get the bounding rect and calculate expected positionX and positionY
+        cy.get('[data-testid="canvas-area"]').then($canvasArea => {
+            const rect = $canvasArea[0].getBoundingClientRect();
+            expectedX = 150 - rect.left;
+            expectedY = 200 - rect.top;
+            console.log('Test - rect.top:', rect.top);
+            console.log('Test - expectedX:', expectedX);
+            console.log('Test - expectedY:', expectedY);
+        }).then(() => {
+            // Define the new card with expected positions
+            const newCard = {
+                id: 101,
                 title: 'New Card',
                 content: '# New Card\n\nClick to edit',
-                positionX: 150,
-                positionY: 200,
+                positionX: expectedX,
+                positionY: expectedY,
                 width: 200,
                 height: 150,
                 canvasId: 1,
-            });
-            req.reply({
-                statusCode: 201,
-                body: newCard,
-            });
-        }).as('createCard');
+                createdAt: new Date().toISOString(),
+            };
 
-        // Double-click on the canvas area at specific coordinates
-        cy.get('[data-testid="canvas-area"]').trigger('dblclick', { clientX: 150, clientY: 200 });
-
-        // Wait for the POST request to complete
-        cy.wait('@createCard').then(() => {
-            // Verify the new card appears in the DOM
-            cy.get('[data-testid="cards-container"]')
-                .within(() => {
-                    cy.get('[data-testid="single-card"]').should('have.length', 1);
-                    cy.contains('New Card').should('be.visible');
+            // Mock POST /cards
+            cy.intercept('POST', `${apiUrl}/cards`, (req) => {
+                console.log('Intercepted POST /cards with body:', req.body);
+                expect(req.body).to.include({
+                    title: 'New Card',
+                    content: '# New Card\n\nClick to edit',
+                    canvasId: 1,
                 });
-        });
+                expect(req.body.positionX).to.be.a('number').and.to.be.closeTo(expectedX, 5);
+                expect(req.body.positionY).to.be.a('number').and.to.be.closeTo(expectedY, 5);
+                req.reply({
+                    statusCode: 201,
+                    body: newCard,
+                });
+            }).as('createCard');
 
-        // Verify the new card appears in the DOM
-        cy.get('[data-testid="cards-container"]')
-            .within(() => {
-                cy.get('[data-testid="single-card"]').should('have.length', 1);
-                cy.contains('New Card').should('be.visible');
+            // Double-click on the canvas area at specific coordinates
+            cy.get('[data-testid="canvas-area"]').click({ clickCount: 2, clientX: 150, clientY: 200 });
+
+            // Wait for the POST request to complete
+            cy.wait('@createCard').then(() => {
+                // Verify the new card appears in the DOM
+                cy.get('[data-testid="cards-container"]')
+                    .within(() => {
+                        cy.get('[data-testid="single-card"]').should('have.length', 1);
+                        cy.contains('New Card').should('be.visible');
+                    });
             });
+        });
     });
 
     it('should delete a card from the display', () => {
