@@ -18,17 +18,16 @@ describe('SingleCard E2E Tests', () => {
   };
 
   beforeEach(() => {
-    // Visit the page where SingleCard is rendered
-    // Adjust the URL based on your routing setup
-    cy.visit('/cards');
+    // Define the API URL using the environment variable
+    const apiUrl = Cypress.env('API_BASE_URL') || 'http://localhost:3001';
 
     // Mock the backend API responses using Cypress intercept
-    cy.intercept('GET', `/api/cards/${mockCard.id}`, {
+    cy.intercept('GET', `${apiUrl}/cards/${mockCard.id}`, {
       statusCode: 200,
       body: mockCard,
     }).as('getCard');
 
-    cy.intercept('PUT', `/api/cards/${mockCard.id}`, (req) => {
+    cy.intercept('PUT', `${apiUrl}/cards/${mockCard.id}`, (req) => {
       // Update the mockCard with the request payload
       Object.assign(mockCard, req.body);
       req.reply({
@@ -37,26 +36,34 @@ describe('SingleCard E2E Tests', () => {
       });
     }).as('updateCard');
 
-    cy.intercept('DELETE', `/api/cards/${mockCard.id}`, {
+    cy.intercept('DELETE', `${apiUrl}/cards/${mockCard.id}`, {
       statusCode: 200,
       body: {},
     }).as('deleteCard');
+
+    // Visit the root path where the Canvas component is rendered
+    cy.visit('/');
+
+    // Explicitly trigger the GET request for the card
+    cy.request(`${apiUrl}/cards/${mockCard.id}`).then((response) => {
+      expect(response.status).to.eq(200);
+    });
   });
 
   it('should render the SingleCard component with correct content', () => {
-    cy.wait('@getCard').then(() => {
-      // Add further Cypress commands or assertions here if needed
+    cy.wait('@getCard', { timeout: 10000 }).then((interception) => {
+      expect(interception.response.statusCode).to.equal(200);
+
+      cy.get('[data-testid="single-card"]', { timeout: 10000 })
+        .should('be.visible')
+        .and('have.css', 'left', `${mockCard.positionX}px`)
+        .and('have.css', 'top', `${mockCard.positionY}px`)
+        .and('have.css', 'width', `${mockCard.width}px`)
+        .and('have.css', 'height', `${mockCard.height}px`);
+
+      cy.get('[data-testid="card-header"]').contains('Drag Me');
+      cy.get('[data-testid="card-content"]').should('contain', mockCard.content);
     });
-
-    cy.get('[data-testid="single-card"]')
-      .should('be.visible')
-      .and('have.css', 'left', `${mockCard.positionX}px`)
-      .and('have.css', 'top', `${mockCard.positionY}px`)
-      .and('have.css', 'width', `${mockCard.width}px`)
-      .and('have.css', 'height', `${mockCard.height}px`);
-
-    cy.get('[data-testid="card-header"]').contains('Drag Me');
-    cy.get('[data-testid="card-content"]').should('contain', mockCard.content);
   });
 
   it('should enter edit mode on double-click and update content on blur', () => {
@@ -134,8 +141,8 @@ describe('SingleCard E2E Tests', () => {
 
   it('should delete the card when the delete button is clicked', () => {
     // Fix 5: Use cy.wait() properly
-    cy.wait('@getCard').then(() => {
-      cy.get('[data-testid="card-controls"]').trigger('mouseover');
+    cy.wait('@getCard', { timeout: 10000 }).then(() => {
+      cy.get('[data-testid="card-controls"]', { timeout: 10000 }).trigger('mouseover');
       // ... rest of the test
     });
 
