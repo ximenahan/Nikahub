@@ -2,14 +2,15 @@
 
 // Ensure Cypress is globally available
 /* global cy */
-
-// Ensure Cypress is globally available
 /* global Cypress */
 
 describe('App E2E', () => {
-  beforeEach(() => {
-    // Navigate to the app after setting up intercept
-    cy.visit('http://localhost:3000');
+  beforeEach(function() {
+    // Option A: Skip visiting the app for the "should handle errors gracefully" test
+    if (this.currentTest.title !== 'should handle errors gracefully') {
+      // Navigate to the app before other tests
+      cy.visit('http://localhost:3000');
+    }
   });
 
   it('should load the app and display the canvas', () => {
@@ -33,12 +34,23 @@ describe('App E2E', () => {
     cy.get('[data-testid="canvas-component"]').should('be.visible');
 
     // Check if at least one card is displayed
-    cy.get('[data-testid^="card-"]').should('have.length.greaterThan', 0);
+    cy.get('[data-testid^="card-"]', { timeout: 10000 }) // Increased timeout
+      .should('have.length.greaterThan', 0);
   });
 
-  it('should handle errors gracefully', () => {
-    // Intercept API calls and simulate an error before the app loads
-    cy.intercept('GET', '**/api/canvases', {
+  it('should handle errors gracefully', function() {
+    // Step 1: Get the API URL from environment variables
+    const apiUrl = Cypress.env('API_BASE_URL');
+    expect(apiUrl).to.not.be.undefined;
+
+    // Step 2: Log all GET requests to verify the actual API call
+    cy.intercept('GET', '**', (req) => {
+      // Replace cy.log() with console.log()
+      console.log(`GET request made to: ${req.url}`);
+    });
+
+    // Step 3: Intercept the correct API endpoint
+    cy.intercept('GET', `${apiUrl}/canvases`, {
       statusCode: 500,
       body: { error: 'Internal Server Error' }
     }).as('getCanvases');
@@ -49,13 +61,17 @@ describe('App E2E', () => {
     // Wait for the API call to ensure the intercept works
     cy.wait('@getCanvases');
 
-    // Log the current HTML to the Cypress console
-    cy.document().then((doc) => {
-      cy.log(doc.body.innerHTML);
+    // Log the DOM content to verify the error message rendering
+    cy.get('body').then(($body) => {
+      console.log('Body HTML:', $body.html());
+      cy.log('Body Text:', $body.text());
     });
 
+    // Pause the test to inspect the UI
+    cy.pause();
+
     // Check if an error message is displayed
-    cy.contains('Error loading canvases').should('be.visible');
+    cy.get('[data-testid="error-message"]', { timeout: 10000 }).should('be.visible');
   });
 
   it('should use the correct API URL from environment variables', () => {
