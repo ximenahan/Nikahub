@@ -5,19 +5,22 @@
 /* global cy */
 
 describe('SingleCard E2E Tests', () => {
-  const mockCard = {
-    id: 201,
-    title: 'E2E Test Card',
-    content: 'Initial Content for E2E Test',
-    positionX: 100,
-    positionY: 150,
-    width: 200,
-    height: 150,
-    canvasId: 1, // Ensure this matches the mocked canvas id
-    createdAt: new Date('2023-10-05T00:00:00Z').toISOString(),
-  };
+  let mockCard; // Use let to allow reassignment
 
   beforeEach(() => {
+    // Initialize mockCard fresh before each test
+    mockCard = {
+      id: 201,
+      title: 'E2E Test Card',
+      content: 'Initial Content for E2E Test',
+      positionX: 100,
+      positionY: 150,
+      width: 200,
+      height: 150,
+      canvasId: 1, // Ensure this matches the mocked canvas id
+      createdAt: new Date('2023-10-05T00:00:00Z').toISOString(),
+    };
+
     // Define the API URL using the environment variable
     const apiUrl = Cypress.env('API_BASE_URL') || 'http://localhost:3001';
 
@@ -125,27 +128,33 @@ describe('SingleCard E2E Tests', () => {
   });
 
   it('should allow resizing the card and update its dimensions', () => {
-    // Trigger mousedown on the resize handle
-    cy.get('[data-testid="card-resize-handle"]')
-      .trigger('mousedown', { which: 1, clientX: mockCard.width, clientY: mockCard.height });
+    cy.get(`[data-testid="card-${mockCard.id}"]`).then(($card) => {
+      // Capture initial dimensions from the DOM
+      const initialWidth = $card.width();
+      const initialHeight = $card.height();
 
-    // Trigger mousemove and mouseup to simulate resizing
-    cy.get('body')
-      .trigger('mousemove', { clientX: mockCard.width + 50, clientY: mockCard.height + 50 })
-      .trigger('mouseup');
+      // Trigger mousedown on the resize handle
+      cy.get('[data-testid="card-resize-handle"]')
+        .trigger('mousedown', { which: 1, clientX: initialWidth, clientY: initialHeight });
 
-    // Wait for the updateCard intercept and verify the request body
-    cy.wait('@updateCard').then((interception) => {
-      expect(interception.request.body).to.include({
-        width: mockCard.width + 50,
-        height: mockCard.height + 50,
+      // Trigger mousemove and mouseup to simulate resizing
+      cy.get('body')
+        .trigger('mousemove', { clientX: initialWidth + 50, clientY: initialHeight + 50 })
+        .trigger('mouseup');
+
+      // Wait for the updateCard intercept and verify the request body
+      cy.wait('@updateCard').then((interception) => {
+        expect(interception.request.body).to.include({
+          width: initialWidth + 50,
+          height: initialHeight + 50,
+        });
       });
-    });
 
-    // Verify that the card's dimensions have been updated in the UI
-    cy.get(`[data-testid="card-${mockCard.id}"]`)
-      .should('have.css', 'width', `${mockCard.width + 50}px`)
-      .and('have.css', 'height', `${mockCard.height + 50}px`);
+      // Verify that the card's dimensions have been updated in the UI
+      cy.get(`[data-testid="card-${mockCard.id}"]`)
+        .should('have.css', 'width', `${initialWidth + 50}px`)
+        .and('have.css', 'height', `${initialHeight + 50}px`);
+    });
   });
 
   it('should delete the card when the delete button is clicked', () => {
