@@ -79,20 +79,6 @@ else
 	echo "Running unknown AWS CLI version"
 fi
 
-# Build frontend and backend
-if [ "$CHOSEN_SERVICE" = "frontend" ]; then
-  docker image build -t frontend -f frontend/Dockerfile ./frontend
-  docker tag frontend:latest $DOCKER_TAG
-  docker push $DOCKER_TAG
-elif [ "$CHOSEN_SERVICE" = "backend" ]; then
-  docker image build -t backend -f backend/Dockerfile ./backend
-  docker tag backend:latest $DOCKER_TAG
-  docker push $DOCKER_TAG
-else
-  echo "Unknown service selected. Exiting."
-  exit 1
-fi
-
 
 
 echo $DOCKER_TAG
