@@ -61,13 +61,16 @@ const Canvas = () => {
 
   const handleCanvasDoubleClick = useCallback(async (e) => {
     console.log('Canvas double-clicked');
+    console.log('Event details:', e);
+    console.log('Selected Canvas:', selectedCanvas);
 
     if (selectedCanvas) {
       const rect = e.currentTarget.getBoundingClientRect();
+      console.log('Canvas rect:', rect);
       console.log('canvasOffset:', canvasOffset);
       const x = e.clientX - rect.left + canvasOffset.x;
       const y = e.clientY - rect.top + canvasOffset.y;
-      console.log('x:', x, 'y:', y);
+      console.log('Calculated position - x:', x, 'y:', y);
       
       const newCard = {
         title: 'New Card',
@@ -80,7 +83,7 @@ const Canvas = () => {
         createdAt: new Date().toISOString(), // Ensure it's a string
       };
 
-      console.log('Creating new card:', newCard);
+      console.log('Attempting to create new card:', newCard);
 
       try {
         const newCardData = await createCard(newCard);
@@ -90,6 +93,8 @@ const Canvas = () => {
         console.error('Error creating card:', error);
         console.error('Server response:', error.response?.data);
       }
+    } else {
+      console.log('No canvas selected, cannot create card');
     }
   }, [canvasOffset, selectedCanvas]);
 
