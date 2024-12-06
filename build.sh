@@ -18,6 +18,12 @@
 # docker tag saas-boost:latest ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ECR_REPO}:latest
 # docker push ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ECR_REPO}:latest
 
+# Ensure required tools are installed
+if ! command -v jq &> /dev/null; then
+  echo "jq is required but not installed. Please install jq and try again."
+  exit 1
+fi
+
 read -p "Please enter your AWS SaaS Boost Environment label: " SAAS_BOOST_ENV
 if [ -z "$SAAS_BOOST_ENV" ]; then
 	echo "You must enter a AWS SaaS Boost Environment label to continue. Exiting."
@@ -40,9 +46,12 @@ done
 read -p "Please enter the number of the service to upload to: " CHOSEN_SERVICE_INDEX
 CHOSEN_SERVICE="${SERVICE_NAMES[CHOSEN_SERVICE_INDEX]}"
 
+
 SERVICE_JSON=$(aws ssm get-parameter --name /saas-boost/$SAAS_BOOST_ENV/app/$CHOSEN_SERVICE/SERVICE_JSON --output text --query "Parameter.Value")
 ECR_REPO=$(echo $SERVICE_JSON | jq .compute.containerRepo - | cut -d\" -f2)
 ECR_TAG=$(echo $SERVICE_JSON | jq .compute.containerTag - | cut -d\" -f2)
+ECR_TAG=${ECR_TAG:-"latest"}
+
 if [ -z "$ECR_REPO" ]; then
     echo "Something went wrong: can't get ECR repo from Parameter Store. Exiting."
     exit 1
@@ -70,8 +79,38 @@ else
 	echo "Running unknown AWS CLI version"
 fi
 
+# Build frontend and backend
+if [ "$CHOSEN_SERVICE" = "frontend" ]; then
+  docker image build -t frontend -f frontend/Dockerfile ./frontend
+  docker tag frontend:latest $DOCKER_TAG
+  docker push $DOCKER_TAG
+elif [ "$CHOSEN_SERVICE" = "backend" ]; then
+  docker image build -t backend -f backend/Dockerfile ./backend
+  docker tag backend:latest $DOCKER_TAG
+  docker push $DOCKER_TAG
+else
+  echo "Unknown service selected. Exiting."
+  exit 1
+fi
+
+
+
 echo $DOCKER_TAG
-mvn clean package
-docker image build -t helloworld -f Dockerfile .
-docker tag helloworld:latest $DOCKER_TAG
-docker push $DOCKER_TAG
+# mvn clean package
+# docker image build -t helloworld -f Dockerfile .
+
+# Remove or comment out the original docker image build commands, and add:
+docker image build -t frontend -f frontend/Dockerfile ./frontend
+docker image build -t backend -f backend/Dockerfile ./backend
+
+# docker tag helloworld:latest $DOCKER_TAG
+# docker push $DOCKER_TAG
+
+# Assume the chosen service corresponds to either 'frontend' or 'backend'
+if [ "$CHOSEN_SERVICE" = "frontend" ]; then
+    docker tag frontend:latest $DOCKER_TAG
+    docker push $DOCKER_TAG
+elif [ "$CHOSEN_SERVICE" = "backend" ]; then
+    docker tag backend:latest $DOCKER_TAG
+    docker push $DOCKER_TAG
+fi
