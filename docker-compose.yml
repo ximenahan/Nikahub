@@ -2,19 +2,17 @@ version: '3.8'
 
 services:
   frontend:
-    build:
-      context: ./frontend  # Path to your frontend directory
+    image: 825004603200.dkr.ecr.ap-southeast-1.amazonaws.com/sb-production-core-xqv927edyrw7-service1-60noauwuqogs:frontend_tag
     ports:
-      - "3000:80"          # Map port 3000 on host to port 80 in container
+      - "3000:80"  # Map port 3000 on host to port 80 in container
     depends_on:
-      - backend            # Ensure backend starts before frontend
+      - backend  # Ensure backend starts before frontend
 
   backend:
-    build:
-      context: ./backend   # Path to your backend directory
+    image: 825004603200.dkr.ecr.ap-southeast-1.amazonaws.com/sb-production-core-xqv927edyrw7-service1-60noauwuqogs:tag_1
     ports:
-      - "3001:3001"        # Map port 3001 on host to port 3001 in container
-    environment:           # Environment variables for backend
+      - "3001:3001"  # Map port 3001 on host to port 3001 in container
+    environment:  # Environment variables for backend
       - DATABASE_HOST=db
       - DATABASE_PORT=5432
       - DATABASE_USER=your_user
@@ -26,9 +24,8 @@ services:
   db:
     image: postgres:latest  # Use the latest PostgreSQL image
     ports:
-      - "5432:5432"         # Map port 5432 on host to port 5432 in container
-    environment:            # Environment variables for PostgreSQL
+      - "5432:5432"  # Map port 5432 on host to port 5432 in container
+    environment:  # Environment variables for PostgreSQL
       POSTGRES_USER: your_user
       POSTGRES_PASSWORD: your_password
       POSTGRES_DB: your_database
-
