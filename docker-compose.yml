@@ -12,12 +12,12 @@ services:
     image: 825004603200.dkr.ecr.ap-southeast-1.amazonaws.com/sb-production-core-xqv927edyrw7-service1-60noauwuqogs:backend_tag
     ports:
       - "3001:3001"  # Map port 3001 on host to port 3001 in container
-    environment:  # Environment variables for backend
-      - DATABASE_HOST=db
-      - DATABASE_PORT=5432
-      - DATABASE_USER=your_user
-      - DATABASE_PASSWORD=your_password
-      - DATABASE_NAME=your_database
+    environment:  # Use environment variables from .env file
+      - DATABASE_HOST=${DATABASE_HOST}
+      - DATABASE_PORT=${DATABASE_PORT}
+      - DATABASE_USER=${DATABASE_USER}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_NAME=${DATABASE_NAME}
     depends_on:
       db:
         condition: service_healthy  # Wait until db is healthy
@@ -26,12 +26,13 @@ services:
     image: postgres:latest  # Use the latest PostgreSQL image
     ports:
       - "5432:5432"  # Map port 5432 on host to port 5432 in container
-    environment:  # Environment variables for PostgreSQL
-      POSTGRES_USER: your_user
-      POSTGRES_PASSWORD: your_password
-      POSTGRES_DB: your_database
-    healthcheck:
-      test: ["CMD", "pg_isready", "-U", "your_user"]
+    environment:  # Use environment variables from .env file
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    healthcheck:  # Add health check for db service
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
+
