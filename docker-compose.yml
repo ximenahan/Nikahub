@@ -9,7 +9,7 @@ services:
       - backend  # Ensure backend starts before frontend
 
   backend:
-    image: 825004603200.dkr.ecr.ap-southeast-1.amazonaws.com/sb-production-core-xqv927edyrw7-service1-60noauwuqogs:tag_1
+    image: 825004603200.dkr.ecr.ap-southeast-1.amazonaws.com/sb-production-core-xqv927edyrw7-service1-60noauwuqogs:backend_tag
     ports:
       - "3001:3001"  # Map port 3001 on host to port 3001 in container
     environment:  # Environment variables for backend
@@ -19,7 +19,8 @@ services:
       - DATABASE_PASSWORD=your_password
       - DATABASE_NAME=your_database
     depends_on:
-      - db
+      db:
+        condition: service_healthy  # Wait until db is healthy
 
   db:
     image: postgres:latest  # Use the latest PostgreSQL image
@@ -29,3 +30,8 @@ services:
       POSTGRES_USER: your_user
       POSTGRES_PASSWORD: your_password
       POSTGRES_DB: your_database
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "your_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
