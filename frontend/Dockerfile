@@ -19,6 +19,10 @@ RUN npm run build
 # Use Nginx to serve the built files
 FROM nginx:alpine
 
+# Add wait-for-it script
+COPY scripts/wait-for-it.sh /usr/local/bin/wait-for-it
+RUN chmod +x /usr/local/bin/wait-for-it
+
 # Copy built files to Nginx's default HTML folder
 COPY --from=build /app/build /usr/share/nginx/html
 

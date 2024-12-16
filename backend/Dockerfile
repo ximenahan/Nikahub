@@ -20,7 +20,7 @@ RUN npm run build
 EXPOSE 3001
 
 # Add wait-for-it script
-COPY wait-for-it.sh /usr/local/bin/wait-for-it
+COPY scripts/wait-for-it.sh /usr/local/bin/wait-for-it
 RUN chmod +x /usr/local/bin/wait-for-it
 
 # Start the backend server with wait-for-it
