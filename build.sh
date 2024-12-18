@@ -46,7 +46,6 @@ done
 read -p "Please enter the number of the service to upload to: " CHOSEN_SERVICE_INDEX
 CHOSEN_SERVICE="${SERVICE_NAMES[CHOSEN_SERVICE_INDEX]}"
 
-
 SERVICE_JSON=$(aws ssm get-parameter --name /saas-boost/$SAAS_BOOST_ENV/app/$CHOSEN_SERVICE/SERVICE_JSON --output text --query "Parameter.Value")
 ECR_REPO=$(echo $SERVICE_JSON | jq .compute.containerRepo - | cut -d\" -f2)
 ECR_TAG=$(echo $SERVICE_JSON | jq .compute.containerTag - | cut -d\" -f2)
@@ -79,24 +78,18 @@ else
 	echo "Running unknown AWS CLI version"
 fi
 
-
-
 echo $DOCKER_TAG
-# mvn clean package
-# docker image build -t helloworld -f Dockerfile .
 
-# Remove or comment out the original docker image build commands, and add:
-docker image build -t frontend -f frontend/Dockerfile ./frontend
-docker image build -t backend -f backend/Dockerfile ./backend
+# Build Frontend with specific tag
+docker build -t frontend:frontend_tag ./frontend
 
-# docker tag helloworld:latest $DOCKER_TAG
-# docker push $DOCKER_TAG
+# Build Backend with specific tag
+docker build -t backend:backend_tag ./backend
 
-# Assume the chosen service corresponds to either 'frontend' or 'backend'
-if [ "$CHOSEN_SERVICE" = "frontend" ]; then
-    docker tag frontend:latest $DOCKER_TAG
-    docker push $DOCKER_TAG
-elif [ "$CHOSEN_SERVICE" = "backend" ]; then
-    docker tag backend:latest $DOCKER_TAG
-    docker push $DOCKER_TAG
-fi
+# Tag the images for ECR
+docker tag frontend:frontend_tag $DOCKER_TAG-frontend
+docker tag backend:backend_tag $DOCKER_TAG-backend
+
+# Push the tagged images to ECR
+docker push $DOCKER_TAG-frontend
+docker push $DOCKER_TAG-backend

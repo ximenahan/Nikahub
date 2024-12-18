@@ -26,8 +26,8 @@ RUN chmod +x /usr/local/bin/wait-for-it
 # Copy built files to Nginx's default HTML folder
 COPY --from=build /app/build /usr/share/nginx/html
 
-# Expose port 80 for serving the app
-EXPOSE 80
+# Expose port 3000 for serving the app
+EXPOSE 3000
 
 # Start Nginx
 CMD ["nginx", "-g", "daemon off;"]
