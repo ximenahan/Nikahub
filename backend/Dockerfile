@@ -19,10 +19,5 @@ RUN npm run build
 # Expose the backend's listening port (e.g., 3001)
 EXPOSE 3001
 
-# Add wait-for-it script
-COPY scripts/wait-for-it.sh /usr/local/bin/wait-for-it
-RUN chmod +x /usr/local/bin/wait-for-it
-
-# Start the backend server with wait-for-it
-CMD ["wait-for-it", "db:5432", "--", "npm", "start"]
-
+# Start the backend server directly
+CMD ["npm", "start"]
