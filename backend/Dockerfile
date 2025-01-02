@@ -5,7 +5,7 @@ FROM node:16
 WORKDIR /app
 
 # (a) Copy wait-for-it script
-COPY wait-for-it.sh /usr/local/bin/wait-for-it
+COPY scripts/wait-for-it.sh /usr/local/bin/wait-for-it
 RUN chmod +x /usr/local/bin/wait-for-it
 
 # Copy package.json and package-lock.json to install dependencies
