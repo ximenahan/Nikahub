@@ -252,7 +252,7 @@ Please open an issue to suggest improvements or report bugs.
 ---
 
 ## License
-This project is licensed under the [MIT License](LICENSE). Feel free to use, modify, and distribute it as permitted.
+This project is licensed under the [Apache-2.0 license](LICENSE). Feel free to use, modify, and distribute it as permitted.
 
 ---
 
