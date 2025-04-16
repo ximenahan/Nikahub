@@ -13,7 +13,7 @@ A platform designed to handle complex knowledge management needs, particularly i
 ---
 
 ## Overview
-This project tackles the **chaotic processes** of capturing and maintaining knowledge when working on complex, long-term research. By combining AI assistance with thorough documentation workflows, it helps researchers:
+This project tackles the **chaotic processes** of capturing and maintaining knowledge when working on complex, long-term research. It helps researchers:
 - **Absorb** intricate topics more effectively.
 - **Reuse** and **build upon** existing knowledge from past projects or other collaborators.
 - Minimize **redundant work** and confusion during turnovers or team expansions.
