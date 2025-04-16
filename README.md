@@ -1,7 +1,4 @@
-# Nikahub
-
-
-# Research Management Software
+# Nikahub: Research Management Software
 A platform designed to handle complex knowledge management needs, particularly in research-intensive environments (e.g., academic and industry labs). This solution helps teams organize research data, insights, and documentation seamlessly over extended timelines and multiple collaborators.
 
 ## Table of Contents
@@ -38,7 +35,10 @@ This project tackles the **chaotic processes** of capturing and maintaining know
 
 ---
 
+
+
 ## Repository Structure
+
 ```
 .
 ├── backend
@@ -175,36 +175,48 @@ This project tackles the **chaotic processes** of capturing and maintaining know
 │   └── webpack.config.js
 ├── LICENSE
 └── README.md
+```
 
-- **backend**: Contains the server logic (NestJS), APIs, and integration tests.  
-- **frontend**: React-based UI, with Cypress and Jest for testing.  
-- **docker-compose.yml**: Orchestrates containers for both the backend and frontend.  
-- **scripts**: Helper scripts for builds, CI/CD, or environment setup.
+---
+
+### Key Folders
+
+- `backend`: Contains the NestJS-based server-side code, API definitions, and integration tests.  
+- `frontend`: Contains the React-based front-end code, with tests (Jest/Cypress) and build scripts.  
+- `docker-compose.yml`: Used to orchestrate both backend and frontend services for development or production.  
+- `scripts`: Various shell scripts for build, CI/CD, and environment provisioning.
 
 ---
 
 ## Getting Started
 
 ### Prerequisites
+
 - **Node.js** (latest LTS)
 - **Docker** & **Docker Compose** (for container-based setup, optional)
 
 ### Installation
-1. **Clone** the repository:
-   ```bash
-   git clone https://github.com/your-username/your-repo.git
-   cd your-repo
-   ```
-2. **Install dependencies** for each service:
-   ```bash
-   # In the backend folder
-   cd backend
-   npm install
 
-   # In the frontend folder
-   cd ../frontend
-   npm install
-   ```
+1. **Clone** the repository:
+
+```bash
+git clone https://github.com/your-username/your-repo.git
+cd your-repo
+```
+
+2. **Install dependencies** for each service:
+
+```bash
+# In the backend folder
+cd backend
+npm install
+
+# In the frontend folder
+cd ../frontend
+npm install
+```
+
+--- 
 
 ### Running the Project
 1. **Using Docker Compose** (recommended):
